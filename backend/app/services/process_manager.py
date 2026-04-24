@@ -52,6 +52,27 @@ if CLAUDE_BINARY:
 else:
     logger.warning("Claude binary not found — agent spawning will be unavailable")
 
+
+def _load_allowed_tools() -> list[str]:
+    """Load allowed tools list from agent-permissions.txt."""
+    permissions_file = Path(__file__).parent.parent.parent / "agent-permissions.txt"
+    if not permissions_file.exists():
+        logger.warning(f"No agent-permissions.txt found at {permissions_file} — agents will use default permissions")
+        return []
+    tools = []
+    for line in permissions_file.read_text().splitlines():
+        line = line.strip()
+        if line and not line.startswith("#"):
+            tools.append(line)
+    return tools
+
+
+ALLOWED_TOOLS = _load_allowed_tools()
+if ALLOWED_TOOLS:
+    logger.info(f"Loaded {len(ALLOWED_TOOLS)} allowed tools for agents")
+else:
+    logger.warning("No allowed tools configured — agents will run with default permissions")
+
 # Type alias for stdout subscriber callbacks
 StdoutCallback = Callable[[str], Awaitable[None]]
 
@@ -184,7 +205,11 @@ class ProcessManager:
             "-p",
             "--output-format", "stream-json",
             "--verbose",
+            "--permission-mode", "auto",
         ]
+
+        if ALLOWED_TOOLS:
+            cmd.extend(["--allowedTools", ",".join(ALLOWED_TOOLS)])
 
         # Add model flag if specified
         effective_model = model or getattr(session, "model", None)

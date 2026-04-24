@@ -1,0 +1,57 @@
+# Planet Commander — Allowed tools for spawned agents
+#
+# These tools are auto-approved when Commander spawns a Claude agent.
+# One tool pattern per line. Blank lines and # comments are ignored.
+#
+# Format matches Claude Code --allowedTools syntax:
+#   ToolName              — allow all uses of that tool
+#   Bash(pattern)         — allow Bash only for commands matching the glob
+#
+# To add a new tool: add a line here and restart the backend.
+# To restrict further: use Bash(pattern) instead of bare Bash.
+
+# File operations
+Read
+Edit
+Write
+Glob
+Grep
+
+# Shell — allow common dev commands
+Bash(git *)
+Bash(make *)
+Bash(go *)
+Bash(npm *)
+Bash(uv *)
+Bash(python *)
+Bash(glab *)
+Bash(ls *)
+Bash(find *)
+Bash(cat *)
+Bash(head *)
+Bash(tail *)
+Bash(wc *)
+Bash(diff *)
+Bash(mkdir *)
+Bash(cp *)
+Bash(mv *)
+Bash(rm *)
+Bash(chmod *)
+Bash(grep *)
+Bash(sed *)
+Bash(awk *)
+Bash(curl *)
+Bash(jq *)
+Bash(gh *)
+
+# Task management
+TaskCreate
+TaskUpdate
+TaskList
+TaskGet
+
+# Notebook
+NotebookEdit
+
+# Agent (sub-agents)
+Agent
