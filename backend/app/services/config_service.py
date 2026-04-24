@@ -30,11 +30,11 @@ class ConfigService:
                     "enabled": True,
                     "schedule_minutes": 30,
                     "repositories": [
-                        {"path": "/Users/aaryn/code/wx/wx", "name": "wx"},
-                        {"path": "/Users/aaryn/code/product/g4-wk/g4", "name": "g4"},
-                        {"path": "/Users/aaryn/code/jobs/jobs", "name": "jobs"},
+                        {"path": str(Path.home() / "code/wx/wx"), "name": "wx"},
+                        {"path": str(Path.home() / "code/product/g4-wk/g4"), "name": "g4"},
+                        {"path": str(Path.home() / "code/jobs/jobs"), "name": "jobs"},
                         {
-                            "path": "/Users/aaryn/workspaces/temporalio/temporalio-cloud",
+                            "path": str(Path.home() / "workspaces/temporalio/temporalio-cloud"),
                             "name": "temporal",
                         },
                     ],
@@ -71,7 +71,7 @@ class ConfigService:
             .get("git_scanner", {})
             .get("repositories", [])
         )
-        return [r["path"] for r in repos]
+        return [str(Path(r["path"]).expanduser()) for r in repos]
 
     def get_jira_queries(self) -> list[dict]:
         """Get JIRA sync queries."""

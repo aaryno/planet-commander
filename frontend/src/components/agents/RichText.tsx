@@ -64,9 +64,7 @@ export function Linkify({ text, className = "" }: { text: string; className?: st
         );
       } else {
         // Fallback to file:// link
-        const resolved = filePath.startsWith("~/")
-          ? `/Users/aaryn/${filePath.slice(2)}`
-          : filePath;
+        const resolved = filePath;
         // Strip line number for file:// URLs
         const cleanResolved = resolved.replace(/:\d+$/, "");
         parts.push(

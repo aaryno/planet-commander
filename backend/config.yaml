@@ -5,13 +5,13 @@ background_jobs:
     enabled: true
     schedule_minutes: 30
     repositories:
-      - path: /Users/aaryn/code/wx/wx
+      - path: ~/code/wx/wx
         name: wx
-      - path: /Users/aaryn/code/product/g4-wk/g4
+      - path: ~/code/product/g4-wk/g4
         name: g4
-      - path: /Users/aaryn/code/jobs/jobs
+      - path: ~/code/jobs/jobs
         name: jobs
-      - path: /Users/aaryn/workspaces/temporalio/temporalio-cloud
+      - path: ~/workspaces/temporalio/temporalio-cloud
         name: temporal
 
   jira_sync:

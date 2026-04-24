@@ -42,10 +42,13 @@ export function fileToGitLabUrl(
   filePath: string,
   repo: RepoInfo
 ): { url: string; relativePath: string; line?: number } | null {
-  // Resolve ~/ to /Users/aaryn/
-  const resolved = filePath.startsWith("~/")
-    ? `/Users/aaryn/${filePath.slice(2)}`
-    : filePath;
+  // Resolve ~/ using the first workDir to infer home directory
+  let resolved = filePath;
+  if (filePath.startsWith("~/") && repo.workDirs.length > 0) {
+    const homeMatch = repo.workDirs[0].match(/^(\/[^/]+\/[^/]+)\//);
+    const homeDir = homeMatch ? homeMatch[1] : "";
+    resolved = homeDir ? `${homeDir}/${filePath.slice(2)}` : filePath;
+  }
 
   // Extract line number suffix (:42)
   let lineAnchor = "";

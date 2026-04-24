@@ -30,7 +30,7 @@ REPO_ROOTS = [
 ]
 
 # Host home dir prefix used in worktree paths output by git
-_HOST_HOME = "/Users/aaryn"
+_HOST_HOME = str(Path.home())
 
 
 def _to_display_path(raw_path: str) -> str:

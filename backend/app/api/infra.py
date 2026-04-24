@@ -1,10 +1,12 @@
 """Infrastructure metrics API — preemption, scale, capacity."""
 
 import logging
+import os
 import subprocess
 import json
 import time
 from datetime import datetime, timezone
+from pathlib import Path
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
 
@@ -17,9 +19,12 @@ router = APIRouter(prefix="/api/infra", tags=["infrastructure"])
 # ---------------------------------------------------------------------------
 
 def _get_grafana_token():
+    token = os.environ.get("GRAFANA_API_TOKEN")
+    if token:
+        return token
     try:
         r = subprocess.run(
-            ["security", "find-generic-password", "-a", "aaryn", "-s", "grafana-api-token", "-w"],
+            ["security", "find-generic-password", "-s", "grafana-api-token", "-w"],
             capture_output=True, text=True, timeout=5,
         )
         if r.returncode == 0:
@@ -27,7 +32,7 @@ def _get_grafana_token():
     except Exception:
         pass
     try:
-        with open("/Users/aaryn/.config/grafana-token") as f:
+        with open(Path.home() / ".config" / "grafana-token") as f:
             return f.read().strip()
     except Exception:
         return None

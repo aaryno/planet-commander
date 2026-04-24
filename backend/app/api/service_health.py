@@ -792,7 +792,7 @@ def _get_slack_token() -> Optional[str]:
     """Load Slack token from Keychain."""
     try:
         result = subprocess.run(
-            ["security", "find-generic-password", "-a", "aaryn", "-s", "slack-api-token", "-w"],
+            ["security", "find-generic-password", "-s", "slack-api-token", "-w"],
             capture_output=True, text=True, timeout=5,
         )
         if result.returncode == 0 and result.stdout.strip():
@@ -802,7 +802,8 @@ def _get_slack_token() -> Optional[str]:
     # Fallback to config file
     try:
         import json as _json
-        with open("/Users/aaryn/tools/slack/slack-config.json") as f:
+        from pathlib import Path
+        with open(Path.home() / "tools" / "slack" / "slack-config.json") as f:
             return _json.loads(f.read()).get("token")
     except Exception:
         return None

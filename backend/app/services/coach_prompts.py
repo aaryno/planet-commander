@@ -66,7 +66,7 @@ def _get_client() -> anthropic.AsyncAnthropic:
         raise ValueError(
             "Anthropic API key not available. "
             "Set ANTHROPIC_API_KEY environment variable or add 'anthropic-api-key' to macOS Keychain: "
-            "security add-generic-password -s 'anthropic-api-key' -a 'aaryn' -w 'sk-ant-...'"
+            "security add-generic-password -s 'anthropic-api-key' -a \"$USER\" -w 'sk-ant-...'"
         )
     return anthropic.AsyncAnthropic(api_key=api_key, timeout=API_TIMEOUT)
 

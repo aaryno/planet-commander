@@ -20,7 +20,7 @@ const samplePatterns = [
 4. Verify pod health and resource limits
 5. Correlate timing with deployment events`,
     source_artifact:
-      "/Users/aaryn/claude/projects/g4-notes/artifacts/20260108-1547-g4c-sub-04-api-availability-incident.md",
+      "~/claude/projects/g4-notes/artifacts/20260108-1547-g4c-sub-04-api-availability-incident.md",
   },
   {
     title: "Cloud Logging Findings - Root Cause",
@@ -38,7 +38,7 @@ const samplePatterns = [
 4. Analyze OOMKilled events in pod status
 5. Review cgroup memory statistics`,
     source_artifact:
-      "/Users/aaryn/claude/projects/wx-notes/artifacts/20251023-1355-comprehensive-analysis.md",
+      "~/claude/projects/wx-notes/artifacts/20251023-1355-comprehensive-analysis.md",
   },
   {
     title: "PagerDuty Incidents - Work Context Integration Complete",
@@ -62,7 +62,7 @@ const samplePatterns = [
 4. Update ContextPanel Component
 5. Test integration end-to-end`,
     source_artifact:
-      "/Users/aaryn/claude/artifacts/20260320-1730-pagerduty-context-integration-complete.md",
+      "~/claude/artifacts/20260320-1730-pagerduty-context-integration-complete.md",
   },
   {
     title: "Cost Query Comparison - Cost Analysis",
@@ -81,7 +81,7 @@ const samplePatterns = [
 5. Estimate monthly cost based on frequency
 6. Document cost vs benefit trade-offs`,
     source_artifact:
-      "/Users/aaryn/claude/artifacts/20260109-1400-cost-query-comparison.md",
+      "~/claude/artifacts/20260109-1400-cost-query-comparison.md",
   },
   {
     title: "Fusion Podrunner Shutdown Analysis - Investigation",
@@ -100,7 +100,7 @@ const samplePatterns = [
 5. Review scaling policy configuration
 6. Calculate cost implications of spot vs regular instances`,
     source_artifact:
-      "/Users/aaryn/claude/projects/wx-notes/artifacts/20260109-1340-fusion-podrunner-shutdown-analysis.md",
+      "~/claude/projects/wx-notes/artifacts/20260109-1340-fusion-podrunner-shutdown-analysis.md",
   },
 ];
 

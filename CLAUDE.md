@@ -1,6 +1,6 @@
-# Commander Dashboard - Development Guide
+# Planet Commander - Development Guide
 
-**Repository**: `~/claude/dashboard/`
+**Repository**: `aaryno/planet-commander` (GitHub)
 **Purpose**: All-in-one agent command center for cross-project workflows
 **Stack**: Next.js (frontend) + FastAPI (backend) + PostgreSQL
 **Changelog**: [CHANGELOG.md](CHANGELOG.md) — Development history with linked artifacts and pattern references
@@ -12,7 +12,7 @@
 ### Running Locally (Recommended: Use Make)
 
 ```bash
-cd ~/claude/dashboard
+cd ~/code/aaryn/planet-commander
 
 # Start both backend + frontend (Ctrl+C stops both)
 make start

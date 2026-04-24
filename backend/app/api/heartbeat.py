@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 import json
 import subprocess
+from pathlib import Path
 
 from app.database import get_db
 
@@ -342,9 +343,13 @@ _PRODUCT_PROGRAMS = {
 
 
 def _get_grafana_token():
-    """Get Grafana token from Keychain or file fallback."""
+    """Get Grafana token from env var, Keychain, or file fallback."""
+    import os
+    token = os.environ.get("GRAFANA_API_TOKEN")
+    if token:
+        return token
     try:
-        r = subprocess.run(["security", "find-generic-password", "-a", "aaryn",
+        r = subprocess.run(["security", "find-generic-password",
                            "-s", "grafana-api-token", "-w"],
                           capture_output=True, text=True, timeout=5)
         if r.returncode == 0:
@@ -352,7 +357,7 @@ def _get_grafana_token():
     except Exception:
         pass
     try:
-        with open("/Users/aaryn/.config/grafana-token") as f:
+        with open(Path.home() / ".config" / "grafana-token") as f:
             return f.read().strip()
     except Exception:
         return None
@@ -650,12 +655,12 @@ async def get_g4_detail(cluster_group: str, lookback: str = Query(default="5m"),
 
     def _get_grafana_token():
         try:
-            r = _sp.run(["security", "find-generic-password", "-a", "aaryn", "-s", "grafana-api-token", "-w"],
+            r = _sp.run(["security", "find-generic-password", "-s", "grafana-api-token", "-w"],
                        capture_output=True, text=True, timeout=5)
             if r.returncode == 0: return r.stdout.strip()
         except: pass
         try:
-            with open("/Users/aaryn/.config/grafana-token") as f: return f.read().strip()
+            with open(Path.home() / ".config" / "grafana-token") as f: return f.read().strip()
         except: return None
 
     token = _get_grafana_token()
@@ -750,12 +755,12 @@ async def get_orders_detail(lookback: str = Query(default="5m"), db: AsyncSessio
 
     def _get_token():
         try:
-            r = _sp.run(["security", "find-generic-password", "-a", "aaryn", "-s", "grafana-api-token", "-w"],
+            r = _sp.run(["security", "find-generic-password", "-s", "grafana-api-token", "-w"],
                        capture_output=True, text=True, timeout=5)
             if r.returncode == 0: return r.stdout.strip()
         except: pass
         try:
-            with open("/Users/aaryn/.config/grafana-token") as f: return f.read().strip()
+            with open(Path.home() / ".config" / "grafana-token") as f: return f.read().strip()
         except: return None
 
     token = _get_token()
@@ -818,12 +823,12 @@ def _sync_subs_detail(lb: str = "5m"):
 
     def _get_token():
         try:
-            r = subprocess.run(["security", "find-generic-password", "-a", "aaryn", "-s", "grafana-api-token", "-w"],
+            r = subprocess.run(["security", "find-generic-password", "-s", "grafana-api-token", "-w"],
                        capture_output=True, text=True, timeout=5)
             if r.returncode == 0: return r.stdout.strip()
         except: pass
         try:
-            with open("/Users/aaryn/.config/grafana-token") as f: return f.read().strip()
+            with open(Path.home() / ".config" / "grafana-token") as f: return f.read().strip()
         except: return None
 
     token = _get_token()

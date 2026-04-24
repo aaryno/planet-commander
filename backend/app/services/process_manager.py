@@ -24,27 +24,33 @@ from sqlalchemy import select
 logger = logging.getLogger(__name__)
 
 
-def find_claude_binary() -> Path:
-    """Find the Claude binary in VS Code extensions directory."""
-    extensions_dir = Path.home() / ".vscode/extensions"
-    pattern = "anthropic.claude-code-*-darwin-arm64"
-    matches = list(extensions_dir.glob(pattern))
+def find_claude_binary() -> Optional[Path]:
+    """Find the Claude binary. Checks PATH first, then VS Code extensions."""
+    import shutil
+    path_binary = shutil.which("claude")
+    if path_binary:
+        return Path(path_binary)
 
-    if not matches:
-        raise FileNotFoundError(f"No Claude Code extension found in {extensions_dir}")
+    extensions_dir = Path.home() / ".vscode" / "extensions"
+    if extensions_dir.exists():
+        import platform
+        arch = "arm64" if platform.machine() == "arm64" else "x64"
+        system = platform.system().lower()
+        pattern = f"anthropic.claude-code-*-{system}-{arch}"
+        matches = sorted(extensions_dir.glob(pattern), reverse=True)
+        for ext_dir in matches:
+            binary = ext_dir / "resources" / "native-binary" / "claude"
+            if binary.exists():
+                return binary
 
-    matches.sort(reverse=True)
-
-    for ext_dir in matches:
-        binary = ext_dir / "resources/native-binary/claude"
-        if binary.exists():
-            return binary
-
-    raise FileNotFoundError("Claude binary not found in any extension directory")
+    return None
 
 
 CLAUDE_BINARY = find_claude_binary()
-logger.info(f"Found Claude binary: {CLAUDE_BINARY}")
+if CLAUDE_BINARY:
+    logger.info(f"Found Claude binary: {CLAUDE_BINARY}")
+else:
+    logger.warning("Claude binary not found — agent spawning will be unavailable")
 
 # Type alias for stdout subscriber callbacks
 StdoutCallback = Callable[[str], Awaitable[None]]
@@ -165,6 +171,14 @@ class ProcessManager:
 
         Launches claude CLI, streams output to subscribers, and cleans up.
         """
+        if not CLAUDE_BINARY:
+            logger.error("Claude binary not found — cannot run agent turns")
+            await session.broadcast_stdout(json.dumps({
+                "type": "error",
+                "message": "Claude binary not found. Install Claude Code CLI or VS Code extension.",
+            }))
+            return
+
         cmd = [
             str(CLAUDE_BINARY),
             "-p",

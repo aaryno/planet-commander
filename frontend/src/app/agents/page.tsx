@@ -424,7 +424,7 @@ function SpawnAgentDialog({
   // Auto-fill working dir from worktree selection
   useEffect(() => {
     if (selectedWorktree) {
-      setWorkingDir(selectedWorktree.path.replace("~", "/Users/aaryn"));
+      setWorkingDir(selectedWorktree.path);
     }
   }, [selectedWorktree]);
 
@@ -644,7 +644,7 @@ function SpawnAgentDialog({
               placeholder={
                 createWorktree && supportsWorktree
                   ? "(auto-resolved from worktree)"
-                  : "/Users/aaryn/workspaces/wx-1"
+                  : "~/workspaces/wx-1"
               }
               className="bg-zinc-800 border-zinc-700 text-zinc-200 placeholder:text-zinc-600 text-sm"
               value={workingDir}

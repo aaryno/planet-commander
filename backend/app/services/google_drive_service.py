@@ -2,6 +2,7 @@
 
 import json
 import logging
+import os
 import re
 from datetime import datetime, timezone
 from pathlib import Path
@@ -10,6 +11,7 @@ from typing import Dict, List, Optional
 from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.models.google_drive_document import GoogleDriveDocument
 
 logger = logging.getLogger(__name__)
@@ -19,7 +21,10 @@ class GoogleDriveService:
     """Service for indexing Google Drive documents."""
 
     GDRIVE_BASE = Path.home() / "Library" / "CloudStorage"
-    COMPUTE_TEAM_PATH = "GoogleDrive-aaryn@planet.com/Shared drives/Compute Team"
+    COMPUTE_TEAM_PATH = os.environ.get(
+        "PLANET_OPS_GDRIVE_COMPUTE_TEAM",
+        str(settings.gdrive_shared / "Compute Team"),
+    )
 
     # Document kind patterns
     POSTMORTEM_PATTERNS = ["postmortem", "post-mortem", "prodissue-", "incident"]
