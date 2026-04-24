@@ -5,15 +5,15 @@ All-in-one agent command center for managing cross-project workflows.
 ## Quick Start
 
 ```bash
-# Start all services (database + backend + frontend)
-docker-compose up
-
-# Or individually:
-cd frontend && npm install && npm run dev          # http://localhost:3000
-cd backend && pip install -e . && uvicorn app.main:app  # http://localhost:8000
+git clone https://github.com/aaryno/planet-commander.git
+cd planet-commander
+make bootstrap    # Installs everything, creates DB, seeds data
+make start        # Starts backend (9000) + frontend (3000)
 ```
 
-See [CLAUDE.md](./CLAUDE.md) for the full development guide.
+For detailed step-by-step setup, see **[ONBOARDING.md](./ONBOARDING.md)**.
+
+For development patterns and component rules, see **[CLAUDE.md](./CLAUDE.md)**.
 
 ## Prerequisites
 

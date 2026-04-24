@@ -1,4 +1,8 @@
-.PHONY: help start start-backend start-frontend stop dev dev-up dev-down dev-logs dev-build dev-local dev-local-up dev-local-backend dev-local-down db-migrate db-seed db-reset agents-sync test setup migrate-and-restart restart-local restart-backend-local restart-frontend-local
+.PHONY: help bootstrap start start-backend start-frontend stop dev dev-up dev-down dev-logs dev-build dev-local dev-local-up dev-local-backend dev-local-down db-migrate db-seed db-reset agents-sync test setup migrate-and-restart restart-local restart-backend-local restart-frontend-local
+
+# First-time setup — clones tools, installs deps, creates DB, seeds
+bootstrap:
+	@bash scripts/bootstrap.sh
 
 # Show available commands
 help:
