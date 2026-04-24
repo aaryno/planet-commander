@@ -1,0 +1,1 @@
+export { SuggestedPatterns } from "./SuggestedPatterns";

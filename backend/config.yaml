@@ -1,0 +1,31 @@
+background_jobs:
+  enabled: true
+
+  git_scanner:
+    enabled: true
+    schedule_minutes: 30
+    repositories:
+      - path: /Users/aaryn/code/wx/wx
+        name: wx
+      - path: /Users/aaryn/code/product/g4-wk/g4
+        name: g4
+      - path: /Users/aaryn/code/jobs/jobs
+        name: jobs
+      - path: /Users/aaryn/workspaces/temporalio/temporalio-cloud
+        name: temporal
+
+  jira_sync:
+    enabled: true
+    schedule_minutes: 15
+    queries:
+      - name: active_compute
+        jql: 'project = COMPUTE AND status IN ("In Progress", "In Review", "Ready to Deploy", "Monitoring")'
+        max_results: 100
+      - name: my_assigned
+        jql: 'assignee = currentUser() AND resolution = Unresolved'
+        max_results: 50
+
+  link_inference:
+    enabled: true
+    schedule_hours: 1
+    min_confidence: 0.7

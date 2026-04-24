@@ -1,0 +1,63 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: planet-ops-db
+    environment:
+      POSTGRES_DB: planet_ops
+      POSTGRES_USER: planet_ops
+      POSTGRES_PASSWORD: planet_ops_local
+    ports:
+      - "9432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U planet_ops"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: planet-ops-backend
+    pid: "host"  # Share host PID namespace to detect Claude Code processes
+    ports:
+      - "9000:9000"
+    environment:
+      PLANET_OPS_DATABASE_URL: "postgresql+asyncpg://planet_ops:planet_ops_local@postgres:5432/planet_ops"
+      PLANET_OPS_DATABASE_URL_SYNC: "postgresql://planet_ops:planet_ops_local@postgres:5432/planet_ops"
+      PLANET_OPS_CLAUDE_DIR: "/data/claude"
+      PLANET_OPS_CLAUDE_PROJECTS_DIR: "/data/claude/projects"
+      PLANET_OPS_WORKSPACES_DIR: "/data/workspaces"
+      PLANET_OPS_TOOLS_DIR: "/data/tools"
+      PLANET_OPS_CLAUDE_DOCS_DIR: "/data/claude-docs"
+      PLANET_OPS_GRAFANA_TOKEN_PATH: "/data/config/grafana-token"
+      PLANET_OPS_PAGERDUTY_TOKEN_PATH: "/data/config/pagerduty-token"
+      PLANET_OPS_GDRIVE_SHARED: "/data/gdrive/Shared drives"
+    volumes:
+      - ./backend:/app
+      - ${HOME}/.claude:/data/claude:ro
+      - ${HOME}/workspaces:/data/workspaces:ro
+      - ${HOME}/tools:/data/tools:ro
+      - ${HOME}/claude:/data/claude-docs:ro
+      - ${HOME}/.config:/data/config:ro
+      - ${HOME}/.jira:/root/.jira:ro
+      - ${HOME}/.vscode:/root/.vscode:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    container_name: planet-ops-frontend
+    ports:
+      - "9300:3000"
+    environment:
+      # Use host.docker.internal for local backend mode (macOS Docker Desktop)
+      API_BACKEND_URL: "http://host.docker.internal:9000"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/next.config.ts:/app/next.config.ts
+      - ./frontend/public:/app/public
+
+volumes:
+  pgdata:
