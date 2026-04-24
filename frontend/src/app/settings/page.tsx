@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Tags, Layout, Terminal as TerminalIcon } from "lucide-react";
+import Link from "next/link";
+import { ChevronRight, ShieldCheck, Tags, Layout, Terminal as TerminalIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -135,6 +136,21 @@ export default function SettingsPage() {
           )}
         </div>
       </div>
+
+      <Link href="/settings/permissions" className="block">
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4 hover:border-zinc-700 transition-colors cursor-pointer">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-blue-400" />
+              <div>
+                <h2 className="text-sm font-medium text-zinc-200">Agent Permissions</h2>
+                <p className="text-sm text-zinc-500">Manage allowed tools for Commander-spawned agents</p>
+              </div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-zinc-600" />
+          </div>
+        </div>
+      </Link>
 
       <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
         <div className="flex items-center gap-2 mb-4">

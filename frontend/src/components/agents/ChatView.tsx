@@ -11,7 +11,8 @@ import { AgentStatusBadge } from "./AgentStatusBadge";
 import { ChatMessage } from "./ChatMessage";
 import { ChatInput } from "./ChatInput";
 import { JiraCard } from "./JiraCard";
-import { useAgentChat } from "@/hooks/useAgentChat";
+import { useAgentChat, type PermissionDenialEvent } from "@/hooks/useAgentChat";
+import { PermissionDialog } from "./PermissionDialog";
 import { addAgentToAMV } from "@/lib/amv";
 import { useCart } from "@/lib/cart";
 import { useToast } from "@/components/ui/toast-simple";
@@ -56,6 +57,7 @@ export function ChatView({ agent, headerActions, className = "", onHide, hideAMV
   const [cancelling, setCancelling] = useState(false);
   const [slackQueueCount, setSlackQueueCount] = useState(0);
   const [viewingArtifact, setViewingArtifact] = useState<string | null>(null);
+  const [pendingDenial, setPendingDenial] = useState<PermissionDenialEvent | null>(null);
   const [artifactsDropdownOpen, setArtifactsDropdownOpen] = useState(false);
   const toast = useToast();
 
@@ -212,7 +214,7 @@ export function ChatView({ agent, headerActions, className = "", onHide, hideAMV
   }, []);
 
   // WebSocket hook - only connect for dashboard-managed agents
-  const ws = useAgentChat(agent.id, dashboardManaged);
+  const ws = useAgentChat(agent.id, dashboardManaged, setPendingDenial);
   const isProcessing = ws.isProcessing;
 
   // Fetch historical messages via HTTP
@@ -1054,6 +1056,10 @@ export function ChatView({ agent, headerActions, className = "", onHide, hideAMV
         onClose={() => setViewingArtifact(null)}
       />
     )}
+    <PermissionDialog
+      denial={pendingDenial}
+      onClose={() => setPendingDenial(null)}
+    />
     </RepoProvider>
   );
 }

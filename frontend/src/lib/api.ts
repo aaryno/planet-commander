@@ -778,7 +778,38 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ response }),
     }),
+
+  // Permissions
+  getPermissions: () =>
+    fetchApi<PermissionsResponse>("/permissions"),
+  updatePermissions: (raw: string) =>
+    fetchApi<PermissionsResponse>("/permissions", {
+      method: "PUT",
+      body: JSON.stringify({ raw }),
+    }),
+  addPermission: (tool: string) =>
+    fetchApi<PermissionsResponse>("/permissions/add", {
+      method: "POST",
+      body: JSON.stringify({ tool }),
+    }),
+  removePermission: (tool: string) =>
+    fetchApi<PermissionsResponse>(`/permissions/${encodeURIComponent(tool)}`, {
+      method: "DELETE",
+    }),
 };
+
+export interface PermissionsResponse {
+  tools: string[];
+  raw: string;
+  count: number;
+}
+
+export interface PermissionDenial {
+  tool_name: string;
+  tool_input: Record<string, unknown>;
+  tool_use_id?: string;
+  session_id?: string;
+}
 
 export interface Agent {
   id: string;

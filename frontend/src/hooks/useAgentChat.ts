@@ -15,18 +15,35 @@ export interface ChatMessage {
 }
 
 interface WebSocketMessage {
-  type: "response" | "error" | "status";
+  type: "response" | "error" | "status" | "permission-denied";
   content?: string;
   message?: string;
   status?: string;
+  tool_name?: string;
+  tool_input?: Record<string, unknown>;
+  tool_use_id?: string;
+  session_id?: string;
 }
 
-export function useAgentChat(agentId: string, enabled: boolean = true) {
+export interface PermissionDenialEvent {
+  tool_name: string;
+  tool_input: Record<string, unknown>;
+  tool_use_id?: string;
+  session_id?: string;
+}
+
+export function useAgentChat(
+  agentId: string,
+  enabled: boolean = true,
+  onPermissionDenied?: (denial: PermissionDenialEvent) => void,
+) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
+  const onPermissionDeniedRef = useRef(onPermissionDenied);
+  onPermissionDeniedRef.current = onPermissionDenied;
 
   // Connect to WebSocket
   useEffect(() => {
@@ -77,6 +94,13 @@ export function useAgentChat(agentId: string, enabled: boolean = true) {
           } else if (data.status === "idle") {
             setIsProcessing(false);
           }
+        } else if (data.type === "permission-denied") {
+          onPermissionDeniedRef.current?.({
+            tool_name: data.tool_name || "unknown",
+            tool_input: data.tool_input || {},
+            tool_use_id: data.tool_use_id,
+            session_id: data.session_id,
+          });
         } else if (data.type === "error") {
           setError(data.message || "Unknown error");
           setIsProcessing(false);

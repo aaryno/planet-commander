@@ -281,7 +281,21 @@ class ProcessManager:
                         }))
 
                 elif msg_type == "result":
-                    # Turn complete - broadcast cost info if available
+                    denials = parsed.get("permission_denials", [])
+                    for denial in denials:
+                        await session.broadcast_stdout(json.dumps({
+                            "type": "permission-denied",
+                            "tool_name": denial.get("tool_name", "unknown"),
+                            "tool_input": denial.get("tool_input", {}),
+                            "tool_use_id": denial.get("tool_use_id"),
+                            "session_id": session.session_id,
+                        }))
+                        logger.warning(
+                            f"Permission denied for {session.session_id}: "
+                            f"{denial.get('tool_name')} "
+                            f"(input: {json.dumps(denial.get('tool_input', {}))[:200]})"
+                        )
+
                     cost = parsed.get("total_cost_usd")
                     num_turns = parsed.get("num_turns")
                     logger.info(
