@@ -21,8 +21,12 @@ export const api = {
   projectLinks: (project: string) => fetchApi<{ project: string; links: Record<string, Array<{ label: string; url: string; icon: string }>> }>(`/projects/${project}/links`),
   listProjects: () => fetchApi<ProjectConfig[]>("/projects"),
   getProject: (key: string) => fetchApi<ProjectConfig>(`/projects/${key}`),
+  createProject: (data: Partial<ProjectConfig>) =>
+    fetchApi<ProjectConfig>("/projects", { method: "POST", body: JSON.stringify(data) }),
   updateProject: (key: string, data: Partial<ProjectConfig>) =>
     fetchApi<ProjectConfig>(`/projects/${key}`, { method: "PUT", body: JSON.stringify(data) }),
+  deleteProject: (key: string) =>
+    fetchApi<ProjectConfig>(`/projects/${key}`, { method: "DELETE" }),
   agents: (project?: string) => fetchApi<{ agents: Agent[]; total: number }>(`/agents${project ? `?project=${project}` : ""}`),
   agentsSearch: (query?: string, jiraKey?: string) => {
     const params = new URLSearchParams();
