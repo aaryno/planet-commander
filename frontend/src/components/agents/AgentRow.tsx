@@ -114,6 +114,150 @@ function parseTitle(raw: string): TitleParts {
   return { cleanTitle: text, hasCommander, commanderText, jiraKey, jiraText, mrNumber, mrRepo, mrUrl };
 }
 
+function MRBadges({ mrs }: { mrs: Array<{ repo: string; iid: number; url: string }> }) {
+  const [enriched, setEnriched] = useState<Record<string, import("@/lib/api").EnrichedMR>>({});
+  const [loaded, setLoaded] = useState(false);
+  const [hoveredMR, setHoveredMR] = useState<string | null>(null);
+
+  const loadEnriched = useCallback(() => {
+    if (loaded) return;
+    setLoaded(true);
+    api.enrichMRs(mrs).then(data => {
+      const map: Record<string, import("@/lib/api").EnrichedMR> = {};
+      for (const mr of data) map[`${mr.repo}!${mr.iid}`] = mr;
+      setEnriched(map);
+    }).catch(() => {});
+  }, [mrs, loaded]);
+
+  const ciColor = (status: string | null) => {
+    if (!status) return "text-zinc-500";
+    if (status === "success") return "text-emerald-400";
+    if (status === "failed") return "text-red-400";
+    if (status === "running") return "text-blue-400";
+    return "text-amber-400";
+  };
+
+  const renderPopover = (key: string) => {
+    const mr = enriched[key];
+    if (!mr) return null;
+    return (
+      <div className="absolute z-[100] bottom-full left-0 mb-1 w-80 bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl p-3 space-y-2 text-xs"
+        onMouseEnter={() => setHoveredMR(key)}
+        onMouseLeave={() => setHoveredMR(null)}
+      >
+        <div className="font-medium text-zinc-200">{mr.title || `!${mr.iid}`}</div>
+        {mr.description_preview && (
+          <p className="text-zinc-400 text-[11px] leading-tight">{mr.description_preview}</p>
+        )}
+        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+          <span className="text-zinc-500">Author</span>
+          <span className="text-zinc-300">{mr.author || "—"}</span>
+          <span className="text-zinc-500">Branch</span>
+          <span className="text-zinc-300 truncate">{mr.source_branch || "—"}</span>
+          <span className="text-zinc-500">Files changed</span>
+          <span className="text-zinc-300">{mr.changed_file_count ?? "—"}</span>
+          <span className="text-zinc-500">Changes</span>
+          <span>
+            {mr.additions != null && <span className="text-emerald-400">+{mr.additions}</span>}
+            {mr.deletions != null && <span className="text-red-400 ml-1">-{mr.deletions}</span>}
+            {mr.additions == null && mr.deletions == null && <span className="text-zinc-500">—</span>}
+          </span>
+          <span className="text-zinc-500">CI</span>
+          <span className={ciColor(mr.ci_status)}>{mr.ci_status || "—"}</span>
+          <span className="text-zinc-500">Approval</span>
+          <span className={mr.approval_status === "approved" ? "text-emerald-400" : "text-zinc-300"}>
+            {mr.approval_status || "—"}
+          </span>
+        </div>
+      </div>
+    );
+  };
+
+  const maxShow = 2;
+
+  if (mrs.length <= maxShow) {
+    return (
+      <div className="flex flex-wrap gap-1 mt-1">
+        {mrs.map((mr) => {
+          const key = `${mr.repo}!${mr.iid}`;
+          const e = enriched[key];
+          const preview = e?.title ? `${e.title.slice(0, 40)}${e.title.length > 40 ? "..." : ""}` : "";
+          return (
+            <div key={key} className="relative"
+              onMouseEnter={() => { loadEnriched(); setHoveredMR(key); }}
+              onMouseLeave={() => setHoveredMR(null)}
+            >
+              {hoveredMR === key && renderPopover(key)}
+              <a href={mr.url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}>
+                <Badge
+                  variant="outline"
+                  className="text-[10px] px-1.5 py-0 gap-1 text-violet-400 border-violet-600/50 bg-violet-500/5 cursor-pointer hover:bg-violet-500/10 max-w-[250px]"
+                >
+                  <GitBranch className="h-2.5 w-2.5 shrink-0" />
+                  <span className="truncate">!{mr.iid}{preview ? ` ${preview}` : ""}</span>
+                </Badge>
+              </a>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1 mt-1">
+      <DropdownMenu onOpenChange={(open) => { if (open) loadEnriched(); }}>
+        <DropdownMenuTrigger asChild>
+          <button
+            className="inline-flex items-center gap-1 rounded-md border border-violet-600/50 bg-violet-500/5 text-violet-400 text-[10px] px-1.5 py-0.5 hover:bg-violet-500/10 transition-colors"
+            onClick={e => e.stopPropagation()}
+          >
+            <GitBranch className="h-2.5 w-2.5" />
+            {mrs.length} MRs
+            <ChevronDown className="h-2.5 w-2.5" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="bg-zinc-900 border-zinc-700 w-96 max-h-80 overflow-y-auto">
+          {mrs.map((mr) => {
+            const key = `${mr.repo}!${mr.iid}`;
+            const e = enriched[key];
+            return (
+              <DropdownMenuItem key={key} asChild className="text-zinc-300 text-xs focus:bg-zinc-800 py-2">
+                <a href={mr.url} target="_blank" rel="noopener noreferrer" className="flex items-start gap-2">
+                  <GitBranch className="h-3 w-3 text-violet-400 shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-violet-400 font-medium">!{mr.iid}</span>
+                      <span className="text-zinc-500 text-[10px] truncate">{mr.repo}</span>
+                    </div>
+                    {e?.title && <div className="text-zinc-300 text-[11px] truncate">{e.title}</div>}
+                    {e?.description_preview && (
+                      <div className="text-zinc-500 text-[10px] truncate mt-0.5">{e.description_preview.slice(0, 60)}</div>
+                    )}
+                    {e && (
+                      <div className="flex items-center gap-3 mt-0.5 text-[10px]">
+                        {e.changed_file_count != null && <span className="text-zinc-500">{e.changed_file_count} files</span>}
+                        {e.additions != null && <span className="text-emerald-400">+{e.additions}</span>}
+                        {e.deletions != null && <span className="text-red-400">-{e.deletions}</span>}
+                        {e.ci_status && <span className={ciColor(e.ci_status)}>{e.ci_status}</span>}
+                        {e.approval_status && (
+                          <span className={e.approval_status === "approved" ? "text-emerald-400" : "text-zinc-500"}>
+                            {e.approval_status}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </a>
+              </DropdownMenuItem>
+            );
+          })}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+}
+
 function timeAgo(dateStr: string | null): string {
   if (!dateStr) return "";
   const now = Date.now();
@@ -336,62 +480,9 @@ export function AgentRow({
             );
           })()}
           {/* MR reference badges */}
-          {agent.mr_references && agent.mr_references.length > 0 && (() => {
-            const mrs = agent.mr_references;
-            const maxShow = 2;
-            return (
-              <div className="flex flex-wrap gap-1 mt-1">
-                {mrs.length <= maxShow ? (
-                  mrs.map((mr) => (
-                    <a
-                      key={`${mr.repo}!${mr.iid}`}
-                      href={mr.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={e => e.stopPropagation()}
-                    >
-                      <Badge
-                        variant="outline"
-                        className="text-[10px] px-1.5 py-0 gap-1 text-violet-400 border-violet-600/50 bg-violet-500/5 cursor-pointer hover:bg-violet-500/10"
-                        title={`${mr.repo} !${mr.iid}`}
-                      >
-                        <GitBranch className="h-2.5 w-2.5 shrink-0" />
-                        !{mr.iid}
-                      </Badge>
-                    </a>
-                  ))
-                ) : (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        className="inline-flex items-center gap-1 rounded-md border border-violet-600/50 bg-violet-500/5 text-violet-400 text-[10px] px-1.5 py-0.5 hover:bg-violet-500/10 transition-colors"
-                        onClick={e => e.stopPropagation()}
-                      >
-                        <GitBranch className="h-2.5 w-2.5" />
-                        {mrs.length} MRs
-                        <ChevronDown className="h-2.5 w-2.5" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="bg-zinc-900 border-zinc-700 max-w-sm max-h-64 overflow-y-auto">
-                      {mrs.map((mr) => (
-                        <DropdownMenuItem
-                          key={`${mr.repo}!${mr.iid}`}
-                          asChild
-                          className="text-zinc-300 text-xs focus:bg-zinc-800"
-                        >
-                          <a href={mr.url} target="_blank" rel="noopener noreferrer">
-                            <GitBranch className="h-3 w-3 text-violet-400 mr-2 shrink-0" />
-                            <span className="truncate">{mr.repo}</span>
-                            <span className="text-violet-400 ml-auto shrink-0">!{mr.iid}</span>
-                          </a>
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
-              </div>
-            );
-          })()}
+          {agent.mr_references && agent.mr_references.length > 0 && (
+            <MRBadges mrs={agent.mr_references} />
+          )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {onAgentClick && (

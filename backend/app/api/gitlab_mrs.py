@@ -293,3 +293,84 @@ async def scan_mrs(
         results.append(GitLabMRScanStatsResponse(**stats))
 
     return results
+
+
+class MREnrichRequest(BaseModel):
+    mrs: List[dict]
+
+
+class MREnrichedResponse(BaseModel):
+    repo: str
+    iid: int
+    url: str
+    title: str | None = None
+    description_preview: str | None = None
+    author: str | None = None
+    state: str | None = None
+    source_branch: str | None = None
+    target_branch: str | None = None
+    additions: int | None = None
+    deletions: int | None = None
+    changed_file_count: int | None = None
+    ci_status: str | None = None
+    approval_status: str | None = None
+    reviewers: list | None = None
+
+
+@router.post("/enrich", response_model=List[MREnrichedResponse])
+async def enrich_mr_references(
+    req: MREnrichRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """Enrich a list of MR references with full details from the DB."""
+    from sqlalchemy import select, or_
+
+    conditions = []
+    for mr in req.mrs:
+        repo = mr.get("repo")
+        iid = mr.get("iid")
+        if repo and iid:
+            conditions.append(
+                (GitLabMergeRequest.repository == repo) &
+                (GitLabMergeRequest.external_mr_id == int(iid))
+            )
+
+    if not conditions:
+        return []
+
+    result = await db.execute(
+        select(GitLabMergeRequest).where(or_(*conditions))
+    )
+    db_mrs = {(m.repository, m.external_mr_id): m for m in result.scalars().all()}
+
+    enriched = []
+    for mr in req.mrs:
+        repo = mr.get("repo", "")
+        iid = mr.get("iid", 0)
+        db_mr = db_mrs.get((repo, int(iid)))
+
+        desc_preview = None
+        if db_mr and db_mr.description:
+            desc_preview = db_mr.description[:120]
+            if len(db_mr.description) > 120:
+                desc_preview += "..."
+
+        enriched.append(MREnrichedResponse(
+            repo=repo,
+            iid=int(iid),
+            url=mr.get("url", ""),
+            title=db_mr.title if db_mr else None,
+            description_preview=desc_preview,
+            author=db_mr.author if db_mr else None,
+            state=db_mr.state if db_mr else None,
+            source_branch=db_mr.source_branch if db_mr else None,
+            target_branch=db_mr.target_branch if db_mr else None,
+            additions=db_mr.additions if db_mr else None,
+            deletions=db_mr.deletions if db_mr else None,
+            changed_file_count=db_mr.changed_file_count if db_mr else None,
+            ci_status=db_mr.ci_status if db_mr else None,
+            approval_status=db_mr.approval_status if db_mr else None,
+            reviewers=db_mr.reviewers if db_mr else None,
+        ))
+
+    return enriched

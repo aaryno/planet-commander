@@ -792,6 +792,13 @@ export const api = {
       body: JSON.stringify({ response }),
     }),
 
+  // MR enrichment
+  enrichMRs: (mrs: { repo: string; iid: number; url: string }[]) =>
+    fetchApi<EnrichedMR[]>("/gitlab/mrs/enrich", {
+      method: "POST",
+      body: JSON.stringify({ mrs }),
+    }),
+
   // Filesystem
   browseDirectory: (path: string = "~") =>
     fetchApi<BrowseResponse>(`/fs/browse?path=${encodeURIComponent(path)}`),
@@ -840,6 +847,24 @@ export interface ProjectConfig {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface EnrichedMR {
+  repo: string;
+  iid: number;
+  url: string;
+  title: string | null;
+  description_preview: string | null;
+  author: string | null;
+  state: string | null;
+  source_branch: string | null;
+  target_branch: string | null;
+  additions: number | null;
+  deletions: number | null;
+  changed_file_count: number | null;
+  ci_status: string | null;
+  approval_status: string | null;
+  reviewers: Array<{ name?: string; username?: string }> | null;
 }
 
 export interface DirectoryEntry {
