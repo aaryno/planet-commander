@@ -88,22 +88,24 @@ function ListEditor({
         </div>
       ))}
       {adding ? (
-        <div className="flex items-center gap-2 px-2 py-1">
-          {addFields.map(f => (
-            <Input
-              key={f.key}
-              value={newValues[f.key] || ""}
-              onChange={e => setNewValues(prev => ({ ...prev, [f.key]: e.target.value }))}
-              onKeyDown={e => e.key === "Enter" && handleAdd()}
-              placeholder={f.placeholder}
-              className="bg-zinc-800 border-zinc-700 text-zinc-200 text-xs h-7 flex-1"
-              autoFocus={f === addFields[0]}
-            />
-          ))}
-          <Button size="sm" onClick={handleAdd} className="bg-blue-600 hover:bg-blue-700 h-7 text-xs px-2">Add</Button>
-          <Button size="sm" variant="ghost" onClick={() => { setAdding(false); setNewValues({}); setDupError(false); }} className="text-zinc-500 h-7 text-xs px-2">Cancel</Button>
-        </div>
-        {dupError && <p className="text-xs text-amber-400 px-2">Already exists</p>}
+        <>
+          <div className="flex items-center gap-2 px-2 py-1">
+            {addFields.map(f => (
+              <Input
+                key={f.key}
+                value={newValues[f.key] || ""}
+                onChange={e => setNewValues(prev => ({ ...prev, [f.key]: e.target.value }))}
+                onKeyDown={e => e.key === "Enter" && handleAdd()}
+                placeholder={f.placeholder}
+                className="bg-zinc-800 border-zinc-700 text-zinc-200 text-xs h-7 flex-1"
+                autoFocus={f === addFields[0]}
+              />
+            ))}
+            <Button size="sm" onClick={handleAdd} className="bg-blue-600 hover:bg-blue-700 h-7 text-xs px-2">Add</Button>
+            <Button size="sm" variant="ghost" onClick={() => { setAdding(false); setNewValues({}); setDupError(false); }} className="text-zinc-500 h-7 text-xs px-2">Cancel</Button>
+          </div>
+          {dupError && <p className="text-xs text-amber-400 px-2">Already exists</p>}
+        </>
       ) : (
         <button
           onClick={() => setAdding(true)}
