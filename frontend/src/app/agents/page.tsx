@@ -279,6 +279,7 @@ export default function AgentsPage() {
             setShowSpawnDialog(false);
             refresh();
           }}
+          projectList={projectList}
         />
       )}
 
@@ -411,9 +412,11 @@ function SearchDropdown<T>({
 function SpawnAgentDialog({
   onClose,
   onSpawned,
+  projectList,
 }: {
   onClose: () => void;
   onSpawned: () => void;
+  projectList: string[];
 }) {
   const [workingDir, setWorkingDir] = useState("");
   const [project, setProject] = useState("");
