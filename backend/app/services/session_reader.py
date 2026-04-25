@@ -220,6 +220,36 @@ def extract_files_changed(session: SessionEntry) -> dict[str, str]:
     return files
 
 
+def extract_mr_references(session: SessionEntry) -> list[dict]:
+    """Extract MR references mentioned in a session. Lightweight scan."""
+    jsonl_path = _resolve_session_path(session)
+    if not jsonl_path:
+        return []
+
+    import json, re
+    mrs: dict[str, dict] = {}
+    mr_pattern = re.compile(r'(?:https://hello\.planet\.com/code/([\w/-]+)/-/merge_requests/(\d+))|(?:!(\d+))')
+
+    try:
+        with open(jsonl_path, "r", errors="replace") as f:
+            for line in f:
+                if "merge_request" not in line and "!(" not in line and "!" not in line:
+                    continue
+                # Look for GitLab MR URLs
+                for match in mr_pattern.finditer(line):
+                    repo, mr_num_url, mr_num_bang = match.groups()
+                    if repo and mr_num_url:
+                        key = f"{repo}!{mr_num_url}"
+                        mrs[key] = {
+                            "repo": repo,
+                            "iid": int(mr_num_url),
+                            "url": f"https://hello.planet.com/code/{repo}/-/merge_requests/{mr_num_url}",
+                        }
+    except Exception:
+        pass
+    return list(mrs.values())
+
+
 def get_session_stats(session: SessionEntry) -> dict:
     """Sum token usage and count prompts from a JSONL session file.
 

@@ -145,6 +145,12 @@ async def sync_agents(db: AsyncSession) -> dict:
                 files = extract_files_changed(session)
                 if files:
                     agent.files_changed = files
+            # Backfill MR references from session JSONL
+            if not agent.mr_references:
+                from app.services.session_reader import extract_mr_references
+                mrs = extract_mr_references(session)
+                if mrs:
+                    agent.mr_references = mrs
             updated_count += 1
 
     await db.commit()
@@ -252,6 +258,7 @@ def _agent_to_dict(agent: Agent) -> dict:
         "labels": [],  # TODO: eager load labels in Phase 3
         "artifacts": [],  # TODO: eager load artifacts
         "files_changed": agent.files_changed or {},
+        "mr_references": agent.mr_references or [],
     }
 
 

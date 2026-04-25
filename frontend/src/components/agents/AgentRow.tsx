@@ -335,6 +335,63 @@ export function AgentRow({
               </div>
             );
           })()}
+          {/* MR reference badges */}
+          {agent.mr_references && agent.mr_references.length > 0 && (() => {
+            const mrs = agent.mr_references;
+            const maxShow = 2;
+            return (
+              <div className="flex flex-wrap gap-1 mt-1">
+                {mrs.length <= maxShow ? (
+                  mrs.map((mr) => (
+                    <a
+                      key={`${mr.repo}!${mr.iid}`}
+                      href={mr.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] px-1.5 py-0 gap-1 text-violet-400 border-violet-600/50 bg-violet-500/5 cursor-pointer hover:bg-violet-500/10"
+                        title={`${mr.repo} !${mr.iid}`}
+                      >
+                        <GitBranch className="h-2.5 w-2.5 shrink-0" />
+                        !{mr.iid}
+                      </Badge>
+                    </a>
+                  ))
+                ) : (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        className="inline-flex items-center gap-1 rounded-md border border-violet-600/50 bg-violet-500/5 text-violet-400 text-[10px] px-1.5 py-0.5 hover:bg-violet-500/10 transition-colors"
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <GitBranch className="h-2.5 w-2.5" />
+                        {mrs.length} MRs
+                        <ChevronDown className="h-2.5 w-2.5" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="bg-zinc-900 border-zinc-700 max-w-sm max-h-64 overflow-y-auto">
+                      {mrs.map((mr) => (
+                        <DropdownMenuItem
+                          key={`${mr.repo}!${mr.iid}`}
+                          asChild
+                          className="text-zinc-300 text-xs focus:bg-zinc-800"
+                        >
+                          <a href={mr.url} target="_blank" rel="noopener noreferrer">
+                            <GitBranch className="h-3 w-3 text-violet-400 mr-2 shrink-0" />
+                            <span className="truncate">{mr.repo}</span>
+                            <span className="text-violet-400 ml-auto shrink-0">!{mr.iid}</span>
+                          </a>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
+            );
+          })()}
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {onAgentClick && (

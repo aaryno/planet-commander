@@ -67,6 +67,7 @@ class Agent(Base):
     )
     origin_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
     files_changed: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    mr_references: Mapped[list | None] = mapped_column(JSONB, nullable=True)
 
     labels = relationship("AgentLabel", back_populates="agent", cascade="all, delete-orphan")
     artifacts = relationship("AgentArtifact", back_populates="agent", cascade="all, delete-orphan")

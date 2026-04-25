@@ -895,6 +895,7 @@ export interface Agent {
   labels: Array<{ name: string; category: string; color: string }>;
   artifacts: Array<{ type: string; path: string }>;
   files_changed: Record<string, string>;
+  mr_references: Array<{ repo: string; iid: number; url: string }>;
 }
 
 export interface AgentSummary {
