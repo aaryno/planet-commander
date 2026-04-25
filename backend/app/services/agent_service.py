@@ -244,6 +244,7 @@ def _agent_to_dict(agent: Agent) -> dict:
         "jira_key": jira_key,
         "labels": [],  # TODO: eager load labels in Phase 3
         "artifacts": [],  # TODO: eager load artifacts
+        "files_changed": agent.files_changed or {},
     }
 
 

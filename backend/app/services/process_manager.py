@@ -94,6 +94,7 @@ class AgentSession:
     started_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     stdout_subscribers: list[StdoutCallback] = field(default_factory=list)
     pending_denials: list[str] = field(default_factory=list)
+    files_changed: dict[str, str] = field(default_factory=dict)
 
     def subscribe_stdout(self, callback: StdoutCallback):
         if callback not in self.stdout_subscribers:
@@ -267,8 +268,22 @@ class ProcessManager:
                 msg_type = parsed.get("type")
 
                 if msg_type == "assistant":
-                    # Extract text content from assistant message
                     content_blocks = parsed.get("message", {}).get("content", [])
+
+                    # Track file-modifying tool calls
+                    for block in content_blocks:
+                        if block.get("type") == "tool_use" and block.get("name") in ("Write", "Edit"):
+                            fp = block.get("input", {}).get("file_path")
+                            if fp:
+                                action = "created" if block["name"] == "Write" else "edited"
+                                session.files_changed[fp] = action
+                                await session.broadcast_stdout(json.dumps({
+                                    "type": "file-changed",
+                                    "path": fp,
+                                    "action": action,
+                                    "filename": fp.rsplit("/", 1)[-1],
+                                }))
+
                     text_parts = [
                         b["text"]
                         for b in content_blocks
@@ -335,6 +350,10 @@ class ProcessManager:
                 "status": "idle",
             }))
 
+            # Persist files_changed to DB
+            if session.files_changed:
+                asyncio.create_task(self._persist_files_changed(session))
+
             # Check for queued context and deliver if available
             asyncio.create_task(self._deliver_queued_context(session))
 
@@ -393,6 +412,29 @@ class ProcessManager:
 
         except Exception as e:
             logger.warning(f"Failed to deliver queued context to {session.session_id}: {e}")
+
+    async def _persist_files_changed(self, session: AgentSession):
+        """Save files_changed to the agent's DB record."""
+        try:
+            from app.database import async_session as make_session
+            from sqlalchemy import select, update
+
+            async with make_session() as db:
+                from app.models.agent import Agent as AgentModel
+                result = await db.execute(
+                    select(AgentModel).where(
+                        AgentModel.claude_session_id == session.session_id
+                    )
+                )
+                agent = result.scalar_one_or_none()
+                if agent:
+                    existing = agent.files_changed or {}
+                    existing.update(session.files_changed)
+                    agent.files_changed = existing
+                    await db.commit()
+                    logger.debug(f"Persisted {len(session.files_changed)} file changes for {session.session_id}")
+        except Exception as e:
+            logger.warning(f"Failed to persist files_changed for {session.session_id}: {e}")
 
     async def _drain_stderr(self, session: AgentSession):
         """Read and log stderr from the current turn's process."""

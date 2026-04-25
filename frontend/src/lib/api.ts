@@ -894,6 +894,7 @@ export interface Agent {
   last_active_at: string;
   labels: Array<{ name: string; category: string; color: string }>;
   artifacts: Array<{ type: string; path: string }>;
+  files_changed: Record<string, string>;
 }
 
 export interface AgentSummary {

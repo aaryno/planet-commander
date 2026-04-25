@@ -2,7 +2,7 @@ import datetime
 import uuid
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, func
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -66,6 +66,7 @@ class Agent(Base):
         UUID(as_uuid=True), ForeignKey("work_contexts.id", ondelete="SET NULL"), nullable=True
     )
     origin_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    files_changed: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
     labels = relationship("AgentLabel", back_populates="agent", cascade="all, delete-orphan")
     artifacts = relationship("AgentArtifact", back_populates="agent", cascade="all, delete-orphan")

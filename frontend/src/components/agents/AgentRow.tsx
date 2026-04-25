@@ -149,42 +149,51 @@ export function AgentRow({
               {agent.managed_by === "dashboard" ? "dashboard" : "vscode"}
             </Badge>
           </div>
-          {/* Artifact badges */}
-          {agent.artifacts.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-1">
-              {agent.artifacts.length <= 2 ? (
-                agent.artifacts.map((a, i) => (
-                  <Badge
-                    key={i}
-                    variant="outline"
-                    className="text-emerald-400 border-emerald-600/50 bg-emerald-500/5 text-[10px] px-1.5 py-0 gap-1 max-w-[200px]"
-                    title={a.path}
-                  >
-                    <FileText className="h-2.5 w-2.5 shrink-0" />
-                    <span className="truncate">{a.path.split("/").pop()}</span>
-                  </Badge>
-                ))
-              ) : (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="inline-flex items-center gap-1 rounded-md border border-emerald-600/50 bg-emerald-500/5 text-emerald-400 text-[10px] px-1.5 py-0.5 hover:bg-emerald-500/10 transition-colors">
-                      <FileText className="h-2.5 w-2.5" />
-                      {agent.artifacts.length} artifacts
-                      <ChevronDown className="h-2.5 w-2.5" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="bg-zinc-900 border-zinc-700 max-w-xs">
-                    {agent.artifacts.map((a, i) => (
-                      <DropdownMenuItem key={i} className="text-zinc-300 text-xs focus:bg-zinc-800">
-                        <FileText className="h-3 w-3 text-emerald-400 mr-2 shrink-0" />
-                        <span className="truncate">{a.path.split("/").pop()}</span>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-            </div>
-          )}
+          {/* Files changed badges */}
+          {agent.files_changed && Object.keys(agent.files_changed).length > 0 && (() => {
+            const files = Object.entries(agent.files_changed);
+            const maxShow = 2;
+            return (
+              <div className="flex flex-wrap gap-1 mt-1">
+                {files.length <= maxShow ? (
+                  files.map(([path, action]) => (
+                    <Badge
+                      key={path}
+                      variant="outline"
+                      className={`text-[10px] px-1.5 py-0 gap-1 max-w-[200px] ${
+                        action === "created"
+                          ? "text-emerald-400 border-emerald-600/50 bg-emerald-500/5"
+                          : "text-blue-400 border-blue-600/50 bg-blue-500/5"
+                      }`}
+                      title={`${action}: ${path}`}
+                    >
+                      <FileText className="h-2.5 w-2.5 shrink-0" />
+                      <span className="truncate">{path.split("/").pop()}</span>
+                    </Badge>
+                  ))
+                ) : (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="inline-flex items-center gap-1 rounded-md border border-emerald-600/50 bg-emerald-500/5 text-emerald-400 text-[10px] px-1.5 py-0.5 hover:bg-emerald-500/10 transition-colors">
+                        <FileText className="h-2.5 w-2.5" />
+                        {files.length} files changed
+                        <ChevronDown className="h-2.5 w-2.5" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="bg-zinc-900 border-zinc-700 max-w-sm max-h-64 overflow-y-auto">
+                      {files.map(([path, action]) => (
+                        <DropdownMenuItem key={path} className="text-zinc-300 text-xs focus:bg-zinc-800">
+                          <FileText className={`h-3 w-3 mr-2 shrink-0 ${action === "created" ? "text-emerald-400" : "text-blue-400"}`} />
+                          <span className="truncate">{path.split("/").pop()}</span>
+                          <span className="text-zinc-600 ml-auto text-[10px] shrink-0">{action}</span>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
+            );
+          })()}
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {onAgentClick && (
