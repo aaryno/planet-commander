@@ -128,7 +128,8 @@ async def sync_agents(db: AsyncSession) -> dict:
             db.add(agent)
             new_count += 1
         else:
-            agent.title = title
+            if agent.managed_by != "dashboard":
+                agent.title = title
             agent.first_prompt = session.first_prompt
             agent.message_count = session.message_count
             agent.last_active_at = modified_at

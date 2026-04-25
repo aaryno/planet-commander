@@ -69,7 +69,9 @@ function parseTitle(raw: string): TitleParts {
   // Collapse whitespace
   text = text.replace(/\s+/g, " ").trim();
 
-  return { cleanTitle: text || "(agent)", hasCommander, commanderText, jiraKey, jiraText };
+  if (!text) text = "(agent)";
+  if (text.length > 120) text = text.slice(0, 117) + "...";
+  return { cleanTitle: text, hasCommander, commanderText, jiraKey, jiraText };
 }
 
 function timeAgo(dateStr: string | null): string {
@@ -155,7 +157,10 @@ export function AgentRow({
     }
   };
 
-  const titleParts = parseTitle(agent.title || "");
+  const rawParts = parseTitle(agent.title || "");
+  const titleParts = rawParts.cleanTitle === "(agent)" && agent.first_prompt
+    ? parseTitle(agent.first_prompt)
+    : rawParts;
 
   const summaryContent = (
     <div className={`group ${agent.hidden_at ? "opacity-50" : ""}`}>
