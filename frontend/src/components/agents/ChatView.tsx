@@ -604,6 +604,38 @@ export function ChatView({ agent, headerActions, className = "", onHide, hideAMV
                   )}
                 </div>
               )}
+              {agent.files_changed && Object.keys(agent.files_changed).length > 0 && (
+                <div className="relative group/files">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-[10px] text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+                    title="Files changed by this agent"
+                  >
+                    <FileText className="h-3 w-3 mr-1" />
+                    {Object.keys(agent.files_changed).length} files
+                  </Button>
+                  <div className="absolute top-full right-0 mt-1 z-50 bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl w-[340px] max-h-[300px] overflow-y-auto hidden group-hover/files:block">
+                    {Object.entries(agent.files_changed).map(([path, action]) => {
+                      const filename = path.split("/").pop() || path;
+                      const shortPath = path.replace(/^\/Users\/\w+\//, "~/");
+                      return (
+                        <div
+                          key={path}
+                          className="px-3 py-2 hover:bg-zinc-700/50 transition-colors flex items-center gap-2 border-b border-zinc-700/50 last:border-0"
+                        >
+                          <FileText className={`h-3.5 w-3.5 shrink-0 ${action === "created" ? "text-emerald-400" : "text-blue-400"}`} />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs text-zinc-200 truncate">{filename}</div>
+                            <div className="text-[10px] text-zinc-500 truncate">{shortPath}</div>
+                          </div>
+                          <span className="text-[10px] text-zinc-600 shrink-0">{action}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
               {!hideAMVButton && (
                 <Button
                   variant="ghost"
