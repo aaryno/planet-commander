@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FileText, GitBranch, FolderOpen, MessageSquare, ChevronDown, ChevronRight, EyeOff, Eye, Zap, Hash, ExternalLink, Terminal, LayoutGrid, ShoppingCart, PanelRight } from "lucide-react";
+import { FileText, GitBranch, FolderOpen, MessageSquare, ChevronDown, ChevronRight, EyeOff, Eye, Zap, Hash, ExternalLink, Terminal, LayoutGrid, ShoppingCart, PanelRight, Bot, Ticket } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +21,56 @@ import { addAgentToAMV } from "@/lib/amv";
 import { useToast } from "@/components/ui/toast-simple";
 import { useCart } from "@/lib/cart";
 import { JIRA_STATUS_COLORS } from "@/lib/status-colors";
+
+interface TitleParts {
+  cleanTitle: string;
+  hasCommander: boolean;
+  commanderText: string;
+  jiraKey: string | null;
+  jiraText: string;
+}
+
+function parseTitle(raw: string): TitleParts {
+  let text = raw;
+  let hasCommander = false;
+  let commanderText = "";
+  let jiraKey: string | null = null;
+  let jiraText = "";
+
+  // Extract [Commander: ...] block
+  const cmdMatch = text.match(/\[Commander:([^\]]*)\]/);
+  if (cmdMatch) {
+    hasCommander = true;
+    commanderText = cmdMatch[0];
+    text = text.replace(cmdMatch[0], "").trim();
+  }
+
+  // Extract [Context: ... JIRA ticket XXX-NNN ...]
+  const ctxMatch = text.match(/\[Context:([^\]]*)\]/);
+  if (ctxMatch) {
+    const keyMatch = ctxMatch[1].match(/([A-Z]+-\d+)/);
+    if (keyMatch) {
+      jiraKey = keyMatch[1];
+      jiraText = ctxMatch[0];
+    }
+    text = text.replace(ctxMatch[0], "").trim();
+  }
+
+  // Extract [Project Context: ...] blocks
+  text = text.replace(/\[Project Context:[^\]]*\]/g, "").trim();
+  text = text.replace(/\[JIRA Ticket:[^\]]*\]/g, (m) => {
+    const km = m.match(/([A-Z]+-\d+)/);
+    if (km && !jiraKey) { jiraKey = km[1]; jiraText = m; }
+    return "";
+  }).trim();
+  text = text.replace(/\[MR Context:[^\]]*\]/g, "").trim();
+  text = text.replace(/\[Slack Context:[^\]]*\]/g, "").trim();
+
+  // Collapse whitespace
+  text = text.replace(/\s+/g, " ").trim();
+
+  return { cleanTitle: text || "(agent)", hasCommander, commanderText, jiraKey, jiraText };
+}
 
 function timeAgo(dateStr: string | null): string {
   if (!dateStr) return "";
@@ -105,15 +155,33 @@ export function AgentRow({
     }
   };
 
+  const titleParts = parseTitle(agent.title || "");
+
   const summaryContent = (
     <div className={`group ${agent.hidden_at ? "opacity-50" : ""}`}>
       {/* Top row: status, title, time, chat button */}
       <div className="flex items-start gap-3">
         <AgentStatusBadge status={agent.status} />
         <div className="flex-1 min-w-0">
-          <p className="text-sm text-zinc-200 truncate font-medium">
-            {agent.title}
-          </p>
+          <div className="flex items-center gap-1.5">
+            {titleParts.hasCommander && (
+              <span className="shrink-0" title={titleParts.commanderText}>
+                <Badge variant="outline" className="text-[9px] px-1 py-0 border-cyan-700/50 bg-cyan-500/5 text-cyan-500 cursor-help">
+                  <Bot className="h-2.5 w-2.5 mr-0.5" />cmd
+                </Badge>
+              </span>
+            )}
+            {titleParts.jiraKey && (
+              <span className="shrink-0" title={titleParts.jiraText}>
+                <Badge variant="outline" className="text-[9px] px-1 py-0 border-amber-700/50 bg-amber-500/5 text-amber-500 cursor-help">
+                  <Ticket className="h-2.5 w-2.5 mr-0.5" />{titleParts.jiraKey}
+                </Badge>
+              </span>
+            )}
+            <p className="text-sm text-zinc-200 truncate font-medium">
+              {titleParts.cleanTitle}
+            </p>
+          </div>
           {/* Labels */}
           {agent.labels.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1">
