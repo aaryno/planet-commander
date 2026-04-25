@@ -57,6 +57,11 @@ export const api = {
     worktree_branch?: string;
     model?: string;
     source?: string;
+    mr_project?: string;
+    mr_iid?: number;
+    slack_channel?: string;
+    slack_thread_ts?: string;
+    slack_messages?: { author: string; text: string }[];
   }) =>
     fetchApi<{ id: string; session_id: string; pid: number; status: string; managed_by: string; worktree_path?: string; git_branch?: string }>("/agents", {
       method: "POST",

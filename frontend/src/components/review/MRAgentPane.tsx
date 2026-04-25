@@ -489,6 +489,8 @@ export function MRAgentPane({ mr, jiraKey, selectedFile, selectedTab, maximized,
           jira_key: jiraKey || undefined,
           initial_prompt: `Review MR !${mr.iid}: ${mr.title}\n\nBranch: ${mr.branch}\n\n${trimmed}`,
           source: "mr-review",
+          mr_project: mr.project,
+          mr_iid: mr.iid,
         });
         setInput("");
 

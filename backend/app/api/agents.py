@@ -360,8 +360,14 @@ class SpawnAgentRequest(BaseModel):
     jira_key: str | None = None
     worktree_path: str | None = None
     worktree_branch: str | None = None
-    model: str | None = None  # claude model: opus, sonnet, haiku
-    source: str | None = None  # UI source: sidebar, amv, mr-review, agents
+    model: str | None = None
+    source: str | None = None
+    # Context source fields — tell the backend what the user was looking at
+    mr_project: str | None = None
+    mr_iid: int | None = None
+    slack_channel: str | None = None
+    slack_thread_ts: str | None = None
+    slack_messages: list[dict] | None = None
 
 
 @router.post("")
@@ -401,11 +407,27 @@ async def spawn_agent(request: SpawnAgentRequest, db: AsyncSession = Depends(get
     # Generate new session ID
     session_id = str(uuid.uuid4())
 
-    # Inject Commander context into initial prompt
+    # Build rich context preamble from all available sources
     initial_prompt = request.initial_prompt
     if initial_prompt:
+        from app.services.context_packs import build_context_preamble
+        from app.database import async_session
+        async with async_session() as ctx_db:
+            context_preamble = await build_context_preamble(
+                project_key=request.project,
+                jira_key=request.jira_key,
+                mr_project=request.mr_project,
+                mr_iid=request.mr_iid,
+                slack_channel=request.slack_channel,
+                slack_thread_ts=request.slack_thread_ts,
+                slack_messages=request.slack_messages,
+                source=request.source,
+                db=ctx_db,
+            )
         agent_stub = {"project": request.project or "unknown"}
         initial_prompt = _inject_commander_context(initial_prompt, agent_stub, request.source)
+        if context_preamble:
+            initial_prompt = context_preamble + "\n" + initial_prompt
 
     # Spawn agent session (initial_prompt runs as background task)
     try:
