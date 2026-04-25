@@ -139,6 +139,12 @@ async def sync_agents(db: AsyncSession) -> dict:
             # Backfill JIRA key if not already set
             if not agent.jira_key and jira_key:
                 agent.jira_key = jira_key
+            # Backfill files_changed from session JSONL
+            if not agent.files_changed:
+                from app.services.session_reader import extract_files_changed
+                files = extract_files_changed(session)
+                if files:
+                    agent.files_changed = files
             updated_count += 1
 
     await db.commit()

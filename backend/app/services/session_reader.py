@@ -191,6 +191,35 @@ def _resolve_session_path(session: SessionEntry) -> Path | None:
     return None
 
 
+def extract_files_changed(session: SessionEntry) -> dict[str, str]:
+    """Extract files created/edited from a session JSONL. Lightweight scan."""
+    jsonl_path = _resolve_session_path(session)
+    if not jsonl_path:
+        return {}
+
+    import json
+    files: dict[str, str] = {}
+    try:
+        with open(jsonl_path, "r", errors="replace") as f:
+            for line in f:
+                if '"Write"' not in line and '"Edit"' not in line:
+                    continue
+                try:
+                    obj = json.loads(line)
+                    if obj.get("type") != "assistant":
+                        continue
+                    for block in obj.get("message", {}).get("content", []):
+                        if block.get("type") == "tool_use" and block.get("name") in ("Write", "Edit"):
+                            fp = block.get("input", {}).get("file_path")
+                            if fp:
+                                files[fp] = "created" if block["name"] == "Write" else "edited"
+                except json.JSONDecodeError:
+                    continue
+    except Exception:
+        pass
+    return files
+
+
 def get_session_stats(session: SessionEntry) -> dict:
     """Sum token usage and count prompts from a JSONL session file.
 
