@@ -124,7 +124,8 @@ function MRBadges({ mrs }: { mrs: Array<{ repo: string; iid: number; url: string
     if (loaded || loading) return;
     setLoading(true);
     setLoaded(true);
-    api.enrichMRs(mrs).then(data => {
+    const batch = mrs.slice(0, 25);
+    api.enrichMRs(batch).then(data => {
       const map: Record<string, import("@/lib/api").EnrichedMR> = {};
       for (const mr of data) map[`${mr.repo}!${mr.iid}`] = mr;
       setEnriched(map);
@@ -231,9 +232,16 @@ function MRBadges({ mrs }: { mrs: Array<{ repo: string; iid: number; url: string
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="bg-zinc-900 border-zinc-700 w-96 max-h-80 overflow-y-auto">
+          {loading && (
+            <div className="px-3 py-2 text-xs text-zinc-500 flex items-center gap-2">
+              <span className="animate-spin h-3 w-3 border border-zinc-500 border-t-transparent rounded-full" />
+              Loading MR details...
+            </div>
+          )}
           {mrs.map((mr) => {
             const key = `${mr.repo}!${mr.iid}`;
             const e = enriched[key];
+            const hasDetails = e?.title;
             return (
               <DropdownMenuItem key={key} asChild className="text-zinc-300 text-xs focus:bg-zinc-800 py-2">
                 <a href={mr.url} target="_blank" rel="noopener noreferrer" className="flex items-start gap-2">
@@ -243,23 +251,27 @@ function MRBadges({ mrs }: { mrs: Array<{ repo: string; iid: number; url: string
                       <span className="text-violet-400 font-medium">!{mr.iid}</span>
                       <span className="text-zinc-500 text-[10px] truncate">{mr.repo}</span>
                     </div>
-                    {e?.title && <div className="text-zinc-300 text-[11px] truncate">{e.title}</div>}
-                    {e?.description_preview && (
-                      <div className="text-zinc-500 text-[10px] truncate mt-0.5">{e.description_preview.slice(0, 60)}</div>
-                    )}
-                    {e && (
-                      <div className="flex items-center gap-3 mt-0.5 text-[10px]">
-                        {e.changed_file_count != null && <span className="text-zinc-500">{e.changed_file_count} files</span>}
-                        {e.additions != null && <span className="text-emerald-400">+{e.additions}</span>}
-                        {e.deletions != null && <span className="text-red-400">-{e.deletions}</span>}
-                        {e.ci_status && <span className={ciColor(e.ci_status)}>{e.ci_status}</span>}
-                        {e.approval_status && (
-                          <span className={e.approval_status === "approved" ? "text-emerald-400" : "text-zinc-500"}>
-                            {e.approval_status}
-                          </span>
+                    {hasDetails ? (
+                      <>
+                        <div className="text-zinc-300 text-[11px] truncate">{e.title}</div>
+                        {e.description_preview && (
+                          <div className="text-zinc-500 text-[10px] truncate mt-0.5">{e.description_preview.slice(0, 60)}</div>
                         )}
-                      </div>
-                    )}
+                        <div className="flex items-center gap-3 mt-0.5 text-[10px]">
+                          {e.changed_file_count != null && <span className="text-zinc-500">{e.changed_file_count} files</span>}
+                          {e.additions != null && <span className="text-emerald-400">+{e.additions}</span>}
+                          {e.deletions != null && <span className="text-red-400">-{e.deletions}</span>}
+                          {e.ci_status && <span className={ciColor(e.ci_status)}>{e.ci_status}</span>}
+                          {e.approval_status && (
+                            <span className={e.approval_status === "approved" ? "text-emerald-400" : "text-zinc-500"}>
+                              {e.approval_status}
+                            </span>
+                          )}
+                        </div>
+                      </>
+                    ) : !loading ? (
+                      <div className="text-zinc-600 text-[10px] mt-0.5">Not in tracked repos</div>
+                    ) : null}
                   </div>
                 </a>
               </DropdownMenuItem>
