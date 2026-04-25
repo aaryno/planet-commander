@@ -58,8 +58,7 @@ function buildCards(
   }
 
   if (project.repositories.length > 0) {
-    const repoPaths = project.repositories.map(r => r.path);
-    cards.mrs = <OpenMRs hideProjectFilter={true} hideProjectColumn={true} repositories={repoPaths} />;
+    cards.mrs = <OpenMRs hideProjectFilter={true} hideProjectColumn={true} projectKey={project.key} />;
     layout.push({ i: "mrs", x: 6, y: row, w: 6, h: 6, minW: 4, minH: 3 });
     if (!cards.jira) {
       const last = layout[layout.length - 1];
@@ -79,33 +78,44 @@ function buildCards(
   );
   layout.push({ i: "agents", x: 0, y: row, w: 6, h: 5, minW: 3, minH: 3 });
 
+  const rightCards: { key: string; node: React.ReactNode }[] = [];
+
   if (project.deployment_config) {
-    cards.deploy = <WXDeployments />;
-    layout.push({ i: "deploy", x: 6, y: row, w: 6, h: 5, minW: 3, minH: 3 });
-  } else if (project.grafana_dashboards.length > 0) {
-    cards.monitoring = (
-      <ScrollableCard title="Monitoring" icon={<BarChart2 className="h-4 w-4" />}>
-        <div className="space-y-2 p-2">
-          {project.grafana_dashboards.map((d, i) => (
-            <a
-              key={i}
-              href={d.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-zinc-800 text-sm text-zinc-300"
-            >
-              <BarChart2 className="h-3.5 w-3.5 text-zinc-500" />
-              {d.name}
-              <ExternalLink className="h-3 w-3 text-zinc-600 ml-auto" />
-            </a>
-          ))}
-        </div>
-      </ScrollableCard>
-    );
-    layout.push({ i: "monitoring", x: 6, y: row, w: 6, h: 5, minW: 3, minH: 3 });
+    rightCards.push({ key: "deploy", node: <WXDeployments /> });
   }
 
-  if (!cards.deploy && !cards.monitoring) {
+  if (project.grafana_dashboards.length > 0) {
+    rightCards.push({
+      key: "monitoring",
+      node: (
+        <ScrollableCard title="Monitoring" icon={<BarChart2 className="h-4 w-4" />}>
+          <div className="space-y-2 p-2">
+            {project.grafana_dashboards.map((d, i) => (
+              <a
+                key={i}
+                href={d.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-zinc-800 text-sm text-zinc-300"
+              >
+                <BarChart2 className="h-3.5 w-3.5 text-zinc-500" />
+                {d.name}
+                <ExternalLink className="h-3 w-3 text-zinc-600 ml-auto" />
+              </a>
+            ))}
+          </div>
+        </ScrollableCard>
+      ),
+    });
+  }
+
+  if (rightCards.length > 0) {
+    for (const rc of rightCards) {
+      cards[rc.key] = rc.node;
+      layout.push({ i: rc.key, x: 6, y: row, w: 6, h: 5, minW: 3, minH: 3 });
+      row += 5;
+    }
+  } else {
     const agentsLayout = layout.find(l => l.i === "agents");
     if (agentsLayout) { agentsLayout.w = 12; }
   }

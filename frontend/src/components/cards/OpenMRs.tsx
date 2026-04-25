@@ -152,12 +152,12 @@ function ReviewStatus({ mr }: { mr: DetailedMR }) {
 interface OpenMRsProps {
   hideProjectFilter?: boolean;
   hideProjectColumn?: boolean;
-  /** Filter to specific repository paths (from project config) */
-  repositories?: string[];
+  /** Filter to a single project key (from project config) */
+  projectKey?: string;
 }
 
-export function OpenMRs({ hideProjectFilter = false, hideProjectColumn = false, repositories }: OpenMRsProps) {
-  const defaultProjects = repositories && repositories.length > 0 ? repositories : PROJECTS.map(p => p.key);
+export function OpenMRs({ hideProjectFilter = false, hideProjectColumn = false, projectKey }: OpenMRsProps) {
+  const defaultProjects = projectKey ? [projectKey] : PROJECTS.map(p => p.key);
   const [selectedProjects, setSelectedProjects] = useState<string[]>(defaultProjects);
   const [selectedTypes, setSelectedTypes] = useState<string[]>(MR_TYPES.map(t => t.key));
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>(MR_STATUSES.map(s => s.key));
