@@ -52,6 +52,7 @@ function buildCards(
         onTicketClick={onJiraClick}
         urlPrefix={`${project.key}.jira`}
         jiraProjectKeys={project.jira_project_keys}
+        labelFilters={project.jira_default_filters.label_filters}
       />
     );
     layout.push({ i: "jira", x: 0, y: row, w: 6, h: 6, minW: 4, minH: 3 });

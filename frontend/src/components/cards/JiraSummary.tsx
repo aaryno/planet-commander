@@ -73,12 +73,14 @@ interface JiraSummaryProps {
   urlPrefix?: string;
   /** Override default JIRA project keys (from project config) */
   jiraProjectKeys?: string[];
+  /** Override label filter buttons (from project config) */
+  labelFilters?: string[];
 }
 
 type SortField = "key" | "summary" | "status" | "assignee" | "age";
 type SortDirection = "asc" | "desc";
 
-export function JiraSummary({ hideProjectFilter = false, onTicketClick, urlPrefix = "jira", jiraProjectKeys }: JiraSummaryProps) {
+export function JiraSummary({ hideProjectFilter = false, onTicketClick, urlPrefix = "jira", jiraProjectKeys, labelFilters: customLabelFilters }: JiraSummaryProps) {
   const p = urlPrefix ? `${urlPrefix}.` : "";
   const defaultKeys = jiraProjectKeys && jiraProjectKeys.length > 0 ? jiraProjectKeys : ["COMPUTE"];
   const [assigneeFilter, setAssigneeFilter] = useUrlParam(`${p}assignee`, "all") as [AssigneeFilter, (v: string) => void];
@@ -88,6 +90,17 @@ export function JiraSummary({ hideProjectFilter = false, onTicketClick, urlPrefi
   const [jiraProjects, setJiraProjects] = useUrlArrayParam(`${p}projects`, defaultKeys);
   const [showProjectFilter, setShowProjectFilter] = useState(false);
   const [sortField, setSortField] = useUrlParam(`${p}sort`, "age") as [SortField, (v: string) => void];
+  const [textFilter, setTextFilter] = useState("");
+
+  const activeLabelFilters = useMemo(() => {
+    if (customLabelFilters && customLabelFilters.length > 0) {
+      return [
+        { key: "all", label: "All" },
+        ...customLabelFilters.map(l => ({ key: l.toLowerCase(), label: l })),
+      ];
+    }
+    return LABEL_FILTERS;
+  }, [customLabelFilters]);
   const [sortDirection, setSortDirection] = useUrlParam(`${p}sortDir`, "asc") as [SortDirection, (v: string) => void];
   const [searchResults, setSearchResults] = useState<JiraTicketEnhanced[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -238,8 +251,17 @@ export function JiraSummary({ hideProjectFilter = false, onTicketClick, urlPrefi
     });
   }, [searchResults, localSearchResults, sortField, sortDirection]);
 
-  // Combined ticket filter (label + assignee)
+  // Combined ticket filter (label + assignee + text)
   const ticketFilter = useCallback((ticket: JiraTicketEnhanced) => {
+    // Text filter
+    if (textFilter) {
+      const q = textFilter.toLowerCase();
+      const matches = ticket.key.toLowerCase().includes(q)
+        || ticket.summary.toLowerCase().includes(q)
+        || ticket.assignee.toLowerCase().includes(q)
+        || (ticket.labels || []).some(l => l.toLowerCase().includes(q));
+      if (!matches) return false;
+    }
     // Label filter
     if (selectedLabel !== "all") {
       if (!(ticket.labels || []).some(l => l.toLowerCase() === selectedLabel)) return false;
@@ -251,7 +273,7 @@ export function JiraSummary({ hideProjectFilter = false, onTicketClick, urlPrefi
     const team = TEAMS[assigneeFilter];
     if (team) return team.members.includes(ticket.assignee);
     return true;
-  }, [selectedLabel, assigneeFilter]);
+  }, [selectedLabel, assigneeFilter, textFilter]);
 
   // Apply filters to data
   const filteredData = useMemo(() => {
@@ -452,7 +474,7 @@ export function JiraSummary({ hideProjectFilter = false, onTicketClick, urlPrefi
               Label
             </button>
             <div className="flex items-center gap-2 flex-wrap">
-              {LABEL_FILTERS.map(lf => (
+              {activeLabelFilters.map(lf => (
                 <button
                   key={lf.key}
                   onClick={() => setSelectedLabel(lf.key)}
@@ -466,6 +488,29 @@ export function JiraSummary({ hideProjectFilter = false, onTicketClick, urlPrefi
                 </button>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Text filter */}
+        {!showSearchResults && (
+          <div className="flex gap-3">
+            <span className="text-[10px] text-zinc-500 font-medium uppercase w-20 text-left shrink-0 pt-1">
+              Filter
+            </span>
+            <input
+              value={textFilter}
+              onChange={e => setTextFilter(e.target.value)}
+              placeholder="Filter by key, summary, assignee, label..."
+              className="bg-zinc-800 border border-zinc-700 text-zinc-200 text-[11px] px-2 py-1 rounded flex-1 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-500"
+            />
+            {textFilter && (
+              <button
+                onClick={() => setTextFilter("")}
+                className="text-zinc-500 hover:text-zinc-300 text-xs"
+              >
+                Clear
+              </button>
+            )}
           </div>
         )}
 
