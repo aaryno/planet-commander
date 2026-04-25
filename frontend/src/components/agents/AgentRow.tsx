@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { FileText, GitBranch, FolderOpen, MessageSquare, ChevronDown, ChevronRight, EyeOff, Eye, Zap, Hash, ExternalLink, Terminal, LayoutGrid, ShoppingCart, PanelRight, Bot, Ticket } from "lucide-react";
 import {
   DropdownMenu,
