@@ -116,18 +116,20 @@ function parseTitle(raw: string): TitleParts {
 
 function MRBadges({ mrs }: { mrs: Array<{ repo: string; iid: number; url: string }> }) {
   const [enriched, setEnriched] = useState<Record<string, import("@/lib/api").EnrichedMR>>({});
+  const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [hoveredMR, setHoveredMR] = useState<string | null>(null);
 
   const loadEnriched = useCallback(() => {
-    if (loaded) return;
+    if (loaded || loading) return;
+    setLoading(true);
     setLoaded(true);
     api.enrichMRs(mrs).then(data => {
       const map: Record<string, import("@/lib/api").EnrichedMR> = {};
       for (const mr of data) map[`${mr.repo}!${mr.iid}`] = mr;
       setEnriched(map);
-    }).catch(() => {});
-  }, [mrs, loaded]);
+    }).catch(() => {}).finally(() => setLoading(false));
+  }, [mrs, loaded, loading]);
 
   const ciColor = (status: string | null) => {
     if (!status) return "text-zinc-500";
@@ -138,14 +140,25 @@ function MRBadges({ mrs }: { mrs: Array<{ repo: string; iid: number; url: string
   };
 
   const renderPopover = (key: string) => {
+    if (loading) {
+      return (
+        <div className="absolute z-[100] bottom-full left-0 mb-1 w-48 bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl p-3 text-xs text-zinc-500 flex items-center gap-2"
+          onMouseEnter={() => setHoveredMR(key)}
+          onMouseLeave={() => setHoveredMR(null)}
+        >
+          <span className="animate-spin h-3 w-3 border border-zinc-500 border-t-transparent rounded-full" />
+          Loading...
+        </div>
+      );
+    }
     const mr = enriched[key];
-    if (!mr) return null;
+    if (!mr || !mr.title) return null;
     return (
       <div className="absolute z-[100] bottom-full left-0 mb-1 w-80 bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl p-3 space-y-2 text-xs"
         onMouseEnter={() => setHoveredMR(key)}
         onMouseLeave={() => setHoveredMR(null)}
       >
-        <div className="font-medium text-zinc-200">{mr.title || `!${mr.iid}`}</div>
+        <div className="font-medium text-zinc-200">{mr.title}</div>
         {mr.description_preview && (
           <p className="text-zinc-400 text-[11px] leading-tight">{mr.description_preview}</p>
         )}
