@@ -28,6 +28,9 @@ interface TitleParts {
   commanderText: string;
   jiraKey: string | null;
   jiraText: string;
+  mrNumber: string | null;
+  mrRepo: string | null;
+  mrUrl: string | null;
 }
 
 function parseTitle(raw: string): TitleParts {
@@ -36,6 +39,9 @@ function parseTitle(raw: string): TitleParts {
   let commanderText = "";
   let jiraKey: string | null = null;
   let jiraText = "";
+  let mrNumber: string | null = null;
+  let mrRepo: string | null = null;
+  let mrUrl: string | null = null;
 
   // Extract [Commander: ...] block (may be truncated without closing ])
   const cmdMatch = text.match(/\[Commander:([^\]]*)\]?/);
@@ -66,12 +72,46 @@ function parseTitle(raw: string): TitleParts {
   text = text.replace(/\[MR Context:[^\]]*\]?/g, "").trim();
   text = text.replace(/\[Slack Context:[^\]]*\]?/g, "").trim();
 
+  // Extract JIRA key from clean text (e.g. "Fix COMPUTE-1234 bug")
+  if (!jiraKey) {
+    const jm = text.match(/\b([A-Z]{2,}-\d+)\b/);
+    if (jm) jiraKey = jm[1];
+  }
+
+  // Extract MR reference (e.g. "!779" or "MR !779")
+  const mrMatch = text.match(/!(\d+)/);
+  if (mrMatch) {
+    mrNumber = mrMatch[1];
+  }
+
+  // Extract repo from title patterns like "review product/avatarg4-deploy Merge requests !779"
+  // or "Review MR !123 in wx/wx"
+  const repoPatterns = [
+    /review\s+([\w-]+\/[\w-]+)\s+/i,
+    /in\s+([\w-]+\/[\w-]+)/i,
+    /([\w-]+\/[\w-]+)\s+(?:Merge|MR|merge)/i,
+  ];
+  for (const pat of repoPatterns) {
+    const rm = text.match(pat);
+    if (rm) {
+      mrRepo = rm[1];
+      break;
+    }
+  }
+
+  // Also check working_directory patterns for repo
+  // (handled in the component since we need agent data)
+
+  if (mrRepo && mrNumber) {
+    mrUrl = `https://hello.planet.com/code/${mrRepo}/-/merge_requests/${mrNumber}`;
+  }
+
   // Collapse whitespace
   text = text.replace(/\s+/g, " ").trim();
 
   if (!text) text = "(agent)";
   if (text.length > 120) text = text.slice(0, 117) + "...";
-  return { cleanTitle: text, hasCommander, commanderText, jiraKey, jiraText };
+  return { cleanTitle: text, hasCommander, commanderText, jiraKey, jiraText, mrNumber, mrRepo, mrUrl };
 }
 
 function timeAgo(dateStr: string | null): string {
@@ -177,9 +217,37 @@ export function AgentRow({
               </span>
             )}
             {titleParts.jiraKey && (
-              <span className="shrink-0" title={titleParts.jiraText}>
-                <Badge variant="outline" className="text-[9px] px-1 py-0 border-amber-700/50 bg-amber-500/5 text-amber-500 cursor-help">
+              <a
+                href={`https://hello.planet.com/jira/browse/${titleParts.jiraKey}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0"
+                title={titleParts.jiraText || titleParts.jiraKey}
+                onClick={e => e.stopPropagation()}
+              >
+                <Badge variant="outline" className="text-[9px] px-1 py-0 border-amber-700/50 bg-amber-500/5 text-amber-500 cursor-pointer hover:bg-amber-500/10">
                   <Ticket className="h-2.5 w-2.5 mr-0.5" />{titleParts.jiraKey}
+                </Badge>
+              </a>
+            )}
+            {titleParts.mrNumber && (
+              <a
+                href={titleParts.mrUrl || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0"
+                title={titleParts.mrRepo ? `${titleParts.mrRepo} !${titleParts.mrNumber}` : `MR !${titleParts.mrNumber}`}
+                onClick={e => e.stopPropagation()}
+              >
+                <Badge variant="outline" className="text-[9px] px-1 py-0 border-violet-700/50 bg-violet-500/5 text-violet-400 cursor-pointer hover:bg-violet-500/10">
+                  <GitBranch className="h-2.5 w-2.5 mr-0.5" />!{titleParts.mrNumber}
+                </Badge>
+              </a>
+            )}
+            {titleParts.mrRepo && (
+              <span className="shrink-0">
+                <Badge variant="outline" className="text-[9px] px-1 py-0 border-zinc-700/50 bg-zinc-500/5 text-zinc-400">
+                  {titleParts.mrRepo}
                 </Badge>
               </span>
             )}
