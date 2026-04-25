@@ -1,6 +1,8 @@
 """Filesystem browsing API for directory picker."""
 
 import os
+import subprocess
+import sys
 from pathlib import Path
 
 from fastapi import APIRouter, Query
@@ -59,3 +61,34 @@ async def browse_directory(path: str = Query(default="~")):
         display_path = "~" + display_path[len(home):]
 
     return BrowseResponse(path=display_path, parent=parent, entries=entries)
+
+
+class PickerResponse(BaseModel):
+    path: str | None
+    cancelled: bool = False
+
+
+@router.get("/pick-directory", response_model=PickerResponse)
+async def pick_directory():
+    """Open native OS directory picker and return selected path."""
+    if sys.platform == "darwin":
+        script = (
+            'tell application "System Events"\n'
+            '  activate\n'
+            '  set theFolder to choose folder with prompt "Select working directory"\n'
+            '  return POSIX path of theFolder\n'
+            'end tell'
+        )
+        try:
+            result = subprocess.run(
+                ["osascript", "-e", script],
+                capture_output=True, text=True, timeout=120,
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                picked = result.stdout.strip().rstrip("/")
+                return PickerResponse(path=picked)
+            return PickerResponse(path=None, cancelled=True)
+        except subprocess.TimeoutExpired:
+            return PickerResponse(path=None, cancelled=True)
+    else:
+        return PickerResponse(path=None, cancelled=True)

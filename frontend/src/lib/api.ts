@@ -782,6 +782,8 @@ export const api = {
   // Filesystem
   browseDirectory: (path: string = "~") =>
     fetchApi<BrowseResponse>(`/fs/browse?path=${encodeURIComponent(path)}`),
+  pickDirectory: () =>
+    fetchApi<PickerResponse>("/fs/pick-directory"),
 
   // Permissions
   getPermissions: () =>
@@ -813,6 +815,11 @@ export interface BrowseResponse {
   path: string;
   parent: string | null;
   entries: DirectoryEntry[];
+}
+
+export interface PickerResponse {
+  path: string | null;
+  cancelled: boolean;
 }
 
 export interface PermissionsResponse {
