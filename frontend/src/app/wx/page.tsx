@@ -1,5 +1,5 @@
-import { WXDashboard } from "@/components/wx/WXDashboard";
+import { ProjectDashboard } from "@/components/projects/ProjectDashboard";
 
 export default function WXPage() {
-  return <WXDashboard />;
+  return <ProjectDashboard projectKey="wx" />;
 }

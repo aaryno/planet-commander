@@ -19,6 +19,10 @@ export const api = {
       body: JSON.stringify({ page, layout }),
     }),
   projectLinks: (project: string) => fetchApi<{ project: string; links: Record<string, Array<{ label: string; url: string; icon: string }>> }>(`/projects/${project}/links`),
+  listProjects: () => fetchApi<ProjectConfig[]>("/projects"),
+  getProject: (key: string) => fetchApi<ProjectConfig>(`/projects/${key}`),
+  updateProject: (key: string, data: Partial<ProjectConfig>) =>
+    fetchApi<ProjectConfig>(`/projects/${key}`, { method: "PUT", body: JSON.stringify(data) }),
   agents: (project?: string) => fetchApi<{ agents: Agent[]; total: number }>(`/agents${project ? `?project=${project}` : ""}`),
   agentsSearch: (query?: string, jiraKey?: string) => {
     const params = new URLSearchParams();
@@ -803,6 +807,31 @@ export const api = {
       method: "DELETE",
     }),
 };
+
+export interface ProjectConfig {
+  id: string;
+  key: string;
+  name: string;
+  description: string | null;
+  color: string;
+  icon: string | null;
+  jira_project_keys: string[];
+  jira_default_filters: {
+    label_filters?: string[];
+    quick_filters?: { name: string; jql: string }[];
+    default_jql?: string;
+  };
+  repositories: { path: string; name: string; local_path?: string }[];
+  grafana_dashboards: { name: string; url: string; dashboard_id?: string }[];
+  pagerduty_service_ids: string[];
+  slack_channels: { name: string; purpose: string }[];
+  deployment_config: Record<string, unknown> | null;
+  links: { category: string; label: string; url: string; icon?: string; relationship?: string }[];
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
 export interface DirectoryEntry {
   name: string;

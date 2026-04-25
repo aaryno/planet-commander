@@ -1,5 +1,5 @@
-import { ProjectPage } from "@/components/projects/ProjectPage";
+import { ProjectDashboard } from "@/components/projects/ProjectDashboard";
 
 export default function JobsPage() {
-  return <ProjectPage project="jobs" />;
+  return <ProjectDashboard projectKey="jobs" />;
 }

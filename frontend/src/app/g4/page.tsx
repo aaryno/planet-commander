@@ -1,5 +1,5 @@
-import { ProjectPage } from "@/components/projects/ProjectPage";
+import { ProjectDashboard } from "@/components/projects/ProjectDashboard";
 
 export default function G4Page() {
-  return <ProjectPage project="g4" />;
+  return <ProjectDashboard projectKey="g4" />;
 }
