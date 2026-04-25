@@ -25,6 +25,7 @@ from app.models.layout import DashboardLayout, ProjectLink
 from app.models.mr_review import MRReview
 from app.models.page_layout import PageLayout
 from app.models.pagerduty_incident import PagerDutyIncident
+from app.models.project import Project
 from app.models.project_doc import ProjectDoc
 from app.models.project_doc_section import ProjectDocSection
 from app.models.skill_registry import SkillRegistry
@@ -89,6 +90,7 @@ __all__ = [
     "PageLayout",
     "MRReview",
     "PagerDutyIncident",
+    "Project",
     "ProjectDoc",
     "ProjectDocSection",
     "SkillRegistry",

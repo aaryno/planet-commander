@@ -290,7 +290,7 @@ app.include_router(project_docs.router)  # Router has /api/project-docs prefix
 app.include_router(google_drive.router, prefix="/api")  # Router has /google-drive prefix
 app.include_router(docs.router, prefix="/api/docs", tags=["docs"])
 app.include_router(jobs.router, prefix="/api")
-app.include_router(projects.router, prefix="/api/projects", tags=["projects"])
+app.include_router(projects.router)  # Router has /api/projects prefix
 app.include_router(processes.router, prefix="/api/processes", tags=["processes"])
 app.include_router(skills.router)  # Router has /api/skills prefix
 app.include_router(temporal.router, prefix="/api/temporal", tags=["temporal"])
