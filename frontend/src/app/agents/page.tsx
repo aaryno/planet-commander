@@ -15,11 +15,19 @@ import { DirectoryPicker } from "@/components/agents/DirectoryPicker";
 import { useDirectoryHistory } from "@/hooks/useDirectoryHistory";
 import { useUrlNullableParam, useUrlBoolParam } from "@/lib/use-url-state";
 
-const PROJECTS = ["wx", "g4", "jobs", "temporal", "general"];
 const STATUSES = ["live", "idle", "dead"] as const;
 const SOURCES = ["dashboard", "vscode"] as const;
 
 export default function AgentsPage() {
+  const [projectList, setProjectList] = useState<string[]>(["wx", "g4", "jobs", "temporal", "general"]);
+
+  useEffect(() => {
+    api.listProjects().then(projects => {
+      const keys = projects.map(p => p.key);
+      if (!keys.includes("general")) keys.push("general");
+      setProjectList(keys);
+    }).catch(() => {});
+  }, []);
   const [projectFilter, setProjectFilter] = useUrlNullableParam("project");
   const [statusFilter, setStatusFilter] = useUrlNullableParam("status");
   const [sourceFilter, setSourceFilter] = useUrlNullableParam("source");
@@ -168,7 +176,7 @@ export default function AgentsPage() {
           />
         </div>
         <div className="flex gap-2">
-          {PROJECTS.map((p) => (
+          {projectList.map((p) => (
             <Badge
               key={p}
               variant="outline"
@@ -510,7 +518,7 @@ function SpawnAgentDialog({
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Project</label>
             <div className="flex gap-2">
-              {PROJECTS.map((p) => (
+              {projectList.map((p) => (
                 <Badge
                   key={p}
                   variant="outline"
