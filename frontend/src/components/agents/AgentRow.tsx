@@ -37,16 +37,16 @@ function parseTitle(raw: string): TitleParts {
   let jiraKey: string | null = null;
   let jiraText = "";
 
-  // Extract [Commander: ...] block
-  const cmdMatch = text.match(/\[Commander:([^\]]*)\]/);
+  // Extract [Commander: ...] block (may be truncated without closing ])
+  const cmdMatch = text.match(/\[Commander:([^\]]*)\]?/);
   if (cmdMatch) {
     hasCommander = true;
     commanderText = cmdMatch[0];
     text = text.replace(cmdMatch[0], "").trim();
   }
 
-  // Extract [Context: ... JIRA ticket XXX-NNN ...]
-  const ctxMatch = text.match(/\[Context:([^\]]*)\]/);
+  // Extract [Context: ... JIRA ticket XXX-NNN ...] (may be truncated)
+  const ctxMatch = text.match(/\[Context:([^\]]*)\]?/);
   if (ctxMatch) {
     const keyMatch = ctxMatch[1].match(/([A-Z]+-\d+)/);
     if (keyMatch) {
@@ -56,15 +56,15 @@ function parseTitle(raw: string): TitleParts {
     text = text.replace(ctxMatch[0], "").trim();
   }
 
-  // Extract [Project Context: ...] blocks
-  text = text.replace(/\[Project Context:[^\]]*\]/g, "").trim();
-  text = text.replace(/\[JIRA Ticket:[^\]]*\]/g, (m) => {
+  // Extract other context blocks (may be truncated)
+  text = text.replace(/\[Project Context:[^\]]*\]?/g, "").trim();
+  text = text.replace(/\[JIRA Ticket:[^\]]*\]?/g, (m) => {
     const km = m.match(/([A-Z]+-\d+)/);
     if (km && !jiraKey) { jiraKey = km[1]; jiraText = m; }
     return "";
   }).trim();
-  text = text.replace(/\[MR Context:[^\]]*\]/g, "").trim();
-  text = text.replace(/\[Slack Context:[^\]]*\]/g, "").trim();
+  text = text.replace(/\[MR Context:[^\]]*\]?/g, "").trim();
+  text = text.replace(/\[Slack Context:[^\]]*\]?/g, "").trim();
 
   // Collapse whitespace
   text = text.replace(/\s+/g, " ").trim();

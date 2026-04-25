@@ -344,13 +344,13 @@ def _clean_title(first_prompt: str, max_len: int = 120) -> str:
 
     text = first_prompt
 
-    # Strip Commander context preambles (bracket-delimited blocks)
-    text = re.sub(r"\[Commander:.*?\]\s*", "", text, flags=re.DOTALL)
-    text = re.sub(r"\[Project Context:.*?\]\s*", "", text, flags=re.DOTALL)
-    text = re.sub(r"\[JIRA Ticket:.*?\]\s*", "", text, flags=re.DOTALL)
-    text = re.sub(r"\[MR Context:.*?\]\s*", "", text, flags=re.DOTALL)
-    text = re.sub(r"\[Slack Context:.*?\]\s*", "", text, flags=re.DOTALL)
-    text = re.sub(r"\[Context:.*?\]\s*", "", text, flags=re.DOTALL)
+    # Strip Commander context preambles (may be truncated without closing ])
+    text = re.sub(r"\[Commander:[^\]]*\]?\s*", "", text, flags=re.DOTALL)
+    text = re.sub(r"\[Project Context:[^\]]*\]?\s*", "", text, flags=re.DOTALL)
+    text = re.sub(r"\[JIRA Ticket:[^\]]*\]?\s*", "", text, flags=re.DOTALL)
+    text = re.sub(r"\[MR Context:[^\]]*\]?\s*", "", text, flags=re.DOTALL)
+    text = re.sub(r"\[Slack Context:[^\]]*\]?\s*", "", text, flags=re.DOTALL)
+    text = re.sub(r"\[Context:[^\]]*\]?\s*", "", text, flags=re.DOTALL)
 
     # Strip all XML-style tags and truncation markers
     text = re.sub(r"<[^>]*>?", " ", text)  # handles <tag> and truncated <…
