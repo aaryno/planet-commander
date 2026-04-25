@@ -40,6 +40,7 @@ function ListEditor({
   renderItem,
   addPlaceholder,
   addFields,
+  dedupKey,
 }: {
   items: Record<string, unknown>[];
   onAdd: (item: Record<string, unknown>) => void;
@@ -47,16 +48,28 @@ function ListEditor({
   renderItem: (item: Record<string, unknown>, index: number) => React.ReactNode;
   addPlaceholder: string;
   addFields: { key: string; placeholder: string; required?: boolean }[];
+  dedupKey?: string;
 }) {
   const [adding, setAdding] = useState(false);
   const [newValues, setNewValues] = useState<Record<string, string>>({});
+  const [dupError, setDupError] = useState(false);
 
   const handleAdd = () => {
     const missing = addFields.filter(f => f.required && !newValues[f.key]?.trim());
     if (missing.length > 0) return;
-    onAdd(Object.fromEntries(
+
+    const newItem = Object.fromEntries(
       addFields.map(f => [f.key, newValues[f.key]?.trim() || ""])
-    ));
+    );
+
+    const key = dedupKey || addFields.find(f => f.required)?.key || addFields[0]?.key;
+    if (key && items.some(existing => String(existing[key]) === String(newItem[key]))) {
+      setDupError(true);
+      setTimeout(() => setDupError(false), 2000);
+      return;
+    }
+
+    onAdd(newItem);
     setNewValues({});
     setAdding(false);
   };
@@ -88,8 +101,9 @@ function ListEditor({
             />
           ))}
           <Button size="sm" onClick={handleAdd} className="bg-blue-600 hover:bg-blue-700 h-7 text-xs px-2">Add</Button>
-          <Button size="sm" variant="ghost" onClick={() => { setAdding(false); setNewValues({}); }} className="text-zinc-500 h-7 text-xs px-2">Cancel</Button>
+          <Button size="sm" variant="ghost" onClick={() => { setAdding(false); setNewValues({}); setDupError(false); }} className="text-zinc-500 h-7 text-xs px-2">Cancel</Button>
         </div>
+        {dupError && <p className="text-xs text-amber-400 px-2">Already exists</p>}
       ) : (
         <button
           onClick={() => setAdding(true)}
@@ -238,6 +252,7 @@ export default function ProjectSettingsPage({
               items={project.repositories as Record<string, unknown>[]}
               onAdd={item => save({ repositories: [...project.repositories, item as ProjectConfig["repositories"][0]] })}
               onRemove={i => save({ repositories: project.repositories.filter((_, j) => j !== i) })}
+              dedupKey="path"
               renderItem={item => (
                 <div className="flex items-center gap-2">
                   <GitBranch className="h-3 w-3 text-zinc-500 shrink-0" />
@@ -317,6 +332,7 @@ export default function ProjectSettingsPage({
               items={project.grafana_dashboards as Record<string, unknown>[]}
               onAdd={item => save({ grafana_dashboards: [...project.grafana_dashboards, item as ProjectConfig["grafana_dashboards"][0]] })}
               onRemove={i => save({ grafana_dashboards: project.grafana_dashboards.filter((_, j) => j !== i) })}
+              dedupKey="url"
               renderItem={item => (
                 <div className="flex items-center gap-2">
                   <BarChart2 className="h-3 w-3 text-zinc-500 shrink-0" />
@@ -338,6 +354,7 @@ export default function ProjectSettingsPage({
               items={project.slack_channels as Record<string, unknown>[]}
               onAdd={item => save({ slack_channels: [...project.slack_channels, item as ProjectConfig["slack_channels"][0]] })}
               onRemove={i => save({ slack_channels: project.slack_channels.filter((_, j) => j !== i) })}
+              dedupKey="name"
               renderItem={item => (
                 <div className="flex items-center gap-2">
                   <MessageCircle className="h-3 w-3 text-zinc-500 shrink-0" />

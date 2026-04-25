@@ -109,10 +109,16 @@ function buildCards(
     });
   }
 
-  if (rightCards.length > 0) {
-    for (const rc of rightCards) {
-      cards[rc.key] = rc.node;
-      layout.push({ i: rc.key, x: 6, y: row, w: 6, h: 5, minW: 3, minH: 3 });
+  if (rightCards.length === 1) {
+    cards[rightCards[0].key] = rightCards[0].node;
+    layout.push({ i: rightCards[0].key, x: 6, y: row, w: 6, h: 5, minW: 3, minH: 3 });
+  } else if (rightCards.length > 1) {
+    cards[rightCards[0].key] = rightCards[0].node;
+    layout.push({ i: rightCards[0].key, x: 6, y: row, w: 6, h: 5, minW: 3, minH: 3 });
+    row += 5;
+    for (let i = 1; i < rightCards.length; i++) {
+      cards[rightCards[i].key] = rightCards[i].node;
+      layout.push({ i: rightCards[i].key, x: 0, y: row, w: 12, h: 5, minW: 4, minH: 3 });
       row += 5;
     }
   } else {
