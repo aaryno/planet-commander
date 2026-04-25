@@ -1059,6 +1059,7 @@ export function ChatView({ agent, headerActions, className = "", onHide, hideAMV
     <PermissionDialog
       denial={pendingDenial}
       onClose={() => setPendingDenial(null)}
+      onGranted={() => {}}
     />
     </RepoProvider>
   );

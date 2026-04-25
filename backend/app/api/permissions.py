@@ -99,11 +99,16 @@ def _write_permissions(tools: list[str]) -> str:
     return raw
 
 
-def _reload():
-    """Reload permissions into the process manager."""
+async def _reload_and_resume(granted_tool: str | None = None):
+    """Reload permissions and resume any blocked sessions."""
     import app.services.process_manager as pm
     pm.ALLOWED_TOOLS = _load_allowed_tools()
     logger.info(f"Reloaded {len(pm.ALLOWED_TOOLS)} allowed tools")
+
+    if granted_tool:
+        resumed = await pm.process_manager.resume_blocked_sessions(granted_tool)
+        if resumed:
+            logger.info(f"Auto-resumed {resumed} session(s) after granting {granted_tool}")
 
 
 @router.get("", response_model=PermissionsResponse)
@@ -120,7 +125,7 @@ async def update_permissions(req: UpdatePermissionsRequest):
         if stripped and not stripped.startswith("#"):
             tools.append(stripped)
     raw = _write_permissions(tools)
-    _reload()
+    await _reload_and_resume()
     return PermissionsResponse(tools=tools, raw=raw, count=len(tools))
 
 
@@ -135,7 +140,7 @@ async def add_permission(req: AddToolRequest):
     if tool not in tools:
         tools.append(tool)
         raw = _write_permissions(tools)
-        _reload()
+        await _reload_and_resume(tool)
         logger.info(f"Added permission: {tool}")
     else:
         _, raw = _read_permissions()
@@ -149,6 +154,6 @@ async def remove_permission(tool: str):
     tools, _ = _read_permissions()
     tools = [t for t in tools if t != tool]
     raw = _write_permissions(tools)
-    _reload()
+    await _reload_and_resume()
     logger.info(f"Removed permission: {tool}")
     return PermissionsResponse(tools=tools, raw=raw, count=len(tools))

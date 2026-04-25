@@ -93,6 +93,7 @@ class AgentSession:
     model: str | None = None
     started_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     stdout_subscribers: list[StdoutCallback] = field(default_factory=list)
+    pending_denials: list[str] = field(default_factory=list)
 
     def subscribe_stdout(self, callback: StdoutCallback):
         if callback not in self.stdout_subscribers:
@@ -282,6 +283,10 @@ class ProcessManager:
 
                 elif msg_type == "result":
                     denials = parsed.get("permission_denials", [])
+                    if denials:
+                        session.pending_denials = [
+                            d.get("tool_name", "unknown") for d in denials
+                        ]
                     for denial in denials:
                         await session.broadcast_stdout(json.dumps({
                             "type": "permission-denied",
@@ -414,6 +419,27 @@ class ProcessManager:
         await session.terminate()
         self._sessions.pop(session_id, None)
         return True
+
+    async def resume_blocked_sessions(self, granted_tool: str) -> int:
+        """Resume sessions that were blocked on a now-granted tool.
+
+        Returns number of sessions resumed.
+        """
+        resumed = 0
+        for session in self._sessions.values():
+            if session.is_processing or not session.pending_denials:
+                continue
+            if granted_tool in session.pending_denials or any(
+                granted_tool.startswith(d.split("(")[0]) for d in session.pending_denials
+            ):
+                session.pending_denials.clear()
+                msg = f"Permission for {granted_tool} has been granted. Continue where you left off."
+                asyncio.create_task(
+                    self._run_turn(session, msg, is_new=False, model=session.model)
+                )
+                logger.info(f"Auto-resumed session {session.session_id} after {granted_tool} granted")
+                resumed += 1
+        return resumed
 
     def list_running(self) -> list[AgentSession]:
         """List all registered agent sessions."""

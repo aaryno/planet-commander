@@ -18,6 +18,7 @@ import type { PermissionDenialEvent } from "@/hooks/useAgentChat";
 interface PermissionDialogProps {
   denial: PermissionDenialEvent | null;
   onClose: () => void;
+  onGranted?: (tool: string) => void;
 }
 
 function generatePatternOptions(
@@ -83,7 +84,7 @@ function generatePatternOptions(
   ];
 }
 
-export function PermissionDialog({ denial, onClose }: PermissionDialogProps) {
+export function PermissionDialog({ denial, onClose, onGranted }: PermissionDialogProps) {
   const [selected, setSelected] = useState<string>("");
   const [saving, setSaving] = useState(false);
 
@@ -111,6 +112,7 @@ export function PermissionDialog({ denial, onClose }: PermissionDialogProps) {
     setSaving(true);
     try {
       await api.addPermission(selected);
+      onGranted?.(selected);
       onClose();
     } catch (err) {
       console.error("Failed to add permission:", err);
