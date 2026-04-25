@@ -14,6 +14,8 @@ import { JiraCard } from "./JiraCard";
 import { useAgentChat, type PermissionDenialEvent } from "@/hooks/useAgentChat";
 import { PermissionDialog } from "./PermissionDialog";
 import { addAgentToAMV } from "@/lib/amv";
+import { parseTitle } from "@/lib/parse-title";
+import { Bot, Ticket } from "lucide-react";
 import { useCart } from "@/lib/cart";
 import { useToast } from "@/components/ui/toast-simple";
 import { RepoProvider, resolveGitLabProject } from "@/lib/repo-context";
@@ -511,9 +513,32 @@ export function ChatView({ agent, headerActions, className = "", onHide, hideAMV
       {!compact && <div className="shrink-0 border-b border-zinc-800 p-4">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
-            <h2 className="text-sm font-semibold text-zinc-200 truncate pr-8">
-              {agent.title}
-            </h2>
+            {(() => {
+              const raw = agent.title || agent.first_prompt || "";
+              const tp = parseTitle(raw);
+              const fallback = tp.cleanTitle === "(agent)" && agent.first_prompt ? parseTitle(agent.first_prompt) : tp;
+              return (
+                <div className="flex items-center gap-1.5 pr-8">
+                  {fallback.hasCommander && (
+                    <span className="shrink-0" title={fallback.commanderText}>
+                      <Badge variant="outline" className="text-[9px] px-1 py-0 border-cyan-700/50 bg-cyan-500/5 text-cyan-500 cursor-help">
+                        <Bot className="h-2.5 w-2.5 mr-0.5" />cmd
+                      </Badge>
+                    </span>
+                  )}
+                  {fallback.jiraKey && (
+                    <a href={`https://hello.planet.com/jira/browse/${fallback.jiraKey}`} target="_blank" rel="noopener noreferrer" className="shrink-0" title={fallback.jiraText}>
+                      <Badge variant="outline" className="text-[9px] px-1 py-0 border-amber-700/50 bg-amber-500/5 text-amber-500 cursor-pointer hover:bg-amber-500/10">
+                        <Ticket className="h-2.5 w-2.5 mr-0.5" />{fallback.jiraKey}
+                      </Badge>
+                    </a>
+                  )}
+                  <h2 className="text-sm font-semibold text-zinc-200 truncate">
+                    {fallback.cleanTitle}
+                  </h2>
+                </div>
+              );
+            })()}
             <div className="flex items-center gap-2 mt-2 flex-wrap">
               <AgentStatusBadge status={localStatus} />
               <Badge
