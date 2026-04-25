@@ -779,6 +779,10 @@ export const api = {
       body: JSON.stringify({ response }),
     }),
 
+  // Filesystem
+  browseDirectory: (path: string = "~") =>
+    fetchApi<BrowseResponse>(`/fs/browse?path=${encodeURIComponent(path)}`),
+
   // Permissions
   getPermissions: () =>
     fetchApi<PermissionsResponse>("/permissions"),
@@ -797,6 +801,19 @@ export const api = {
       method: "DELETE",
     }),
 };
+
+export interface DirectoryEntry {
+  name: string;
+  path: string;
+  is_dir: boolean;
+  is_git: boolean;
+}
+
+export interface BrowseResponse {
+  path: string;
+  parent: string | null;
+  entries: DirectoryEntry[];
+}
 
 export interface PermissionsResponse {
   tools: string[];

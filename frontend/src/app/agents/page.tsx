@@ -11,6 +11,8 @@ import { api } from "@/lib/api";
 import type { Agent, JiraTicketResult, WorktreeInfo } from "@/lib/api";
 import { AgentRow } from "@/components/agents/AgentRow";
 import { ChatSidebar } from "@/components/agents/ChatSidebar";
+import { DirectoryPicker } from "@/components/agents/DirectoryPicker";
+import { useDirectoryHistory } from "@/hooks/useDirectoryHistory";
 import { useUrlNullableParam, useUrlBoolParam } from "@/lib/use-url-state";
 
 const PROJECTS = ["wx", "g4", "jobs", "temporal", "general"];
@@ -410,6 +412,7 @@ function SpawnAgentDialog({
   const [prompt, setPrompt] = useState("");
   const [spawning, setSpawning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { addToHistory } = useDirectoryHistory();
 
   // JIRA ticket selection
   const [selectedTicket, setSelectedTicket] = useState<JiraTicketResult | null>(null);
@@ -471,6 +474,7 @@ function SpawnAgentDialog({
         worktree_path: selectedWorktree?.path,
         worktree_branch: selectedWorktree?.branch,
       });
+      if (workingDir) addToHistory(workingDir);
       onSpawned();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -640,16 +644,15 @@ function SpawnAgentDialog({
                 <span className="text-cyan-500/60 ml-1">(auto from new worktree)</span>
               )}
             </label>
-            <Input
+            <DirectoryPicker
+              value={workingDir}
+              onChange={setWorkingDir}
+              disabled={createWorktree && !selectedWorktree && supportsWorktree}
               placeholder={
                 createWorktree && supportsWorktree
                   ? "(auto-resolved from worktree)"
                   : "~/workspaces/wx-1"
               }
-              className="bg-zinc-800 border-zinc-700 text-zinc-200 placeholder:text-zinc-600 text-sm"
-              value={workingDir}
-              onChange={(e) => setWorkingDir(e.target.value)}
-              disabled={createWorktree && !selectedWorktree && supportsWorktree}
             />
           </div>
 

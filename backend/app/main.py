@@ -5,7 +5,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from app.api import agents, artifacts, audits, automation, coach, contexts, docs, enrich, gitlab, gitlab_mrs, google_drive, grafana, grafana_alerts, health, infra, investigations, jira, jobs, labels, layout, links, pagerduty, permissions, processes, project_docs, projects, service_health, skills, slack, slack_threads, summaries, sync, temporal, terminal, urls, warnings, workspaces, worktrees, wx
+from app.api import agents, artifacts, audits, automation, coach, contexts, docs, enrich, fs, gitlab, gitlab_mrs, google_drive, grafana, grafana_alerts, health, infra, investigations, jira, jobs, labels, layout, links, pagerduty, permissions, processes, project_docs, projects, service_health, skills, slack, slack_threads, summaries, sync, temporal, terminal, urls, warnings, workspaces, worktrees, wx
 from app.services.sync_scheduler import scheduler
 from app.services.process_manager import process_manager
 from app.services.background_jobs import job_service
@@ -284,6 +284,7 @@ app.include_router(grafana_alerts.router)  # Router has /api/grafana/alerts pref
 app.include_router(health.router, prefix="/api")  # Router has /health prefix
 app.include_router(summaries.router, prefix="/api")  # Router has /summaries prefix
 app.include_router(pagerduty.router, prefix="/api/pagerduty", tags=["pagerduty"])
+app.include_router(fs.router)  # Router has /api/fs prefix
 app.include_router(permissions.router)  # Router has /api/permissions prefix
 app.include_router(project_docs.router)  # Router has /api/project-docs prefix
 app.include_router(google_drive.router, prefix="/api")  # Router has /google-drive prefix
