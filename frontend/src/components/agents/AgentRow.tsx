@@ -22,6 +22,7 @@ import { useToast } from "@/components/ui/toast-simple";
 import { useCart } from "@/lib/cart";
 import { JIRA_STATUS_COLORS } from "@/lib/status-colors";
 import { parseTitle } from "@/lib/parse-title";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 function MRBadges({ mrs }: { mrs: Array<{ repo: string; iid: number; url: string }> }) {
   const [enriched, setEnriched] = useState<Record<string, import("@/lib/api").EnrichedMR>>({});
@@ -287,26 +288,40 @@ export function AgentRow({
         <AgentStatusBadge status={agent.status} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
+            <TooltipProvider>
             {titleParts.hasCommander && (
-              <span className="shrink-0" title={titleParts.commanderText}>
-                <Badge variant="outline" className="text-[9px] px-1 py-0 border-cyan-700/50 bg-cyan-500/5 text-cyan-500 cursor-help">
-                  <Bot className="h-2.5 w-2.5 mr-0.5" />cmd
-                </Badge>
-              </span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="shrink-0">
+                    <Badge variant="outline" className="text-[9px] px-1 py-0 border-cyan-700/50 bg-cyan-500/5 text-cyan-500 cursor-help">
+                      <Bot className="h-2.5 w-2.5 mr-0.5" />cmd
+                    </Badge>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-sm whitespace-pre-wrap break-words">
+                  {titleParts.commanderText}
+                </TooltipContent>
+              </Tooltip>
             )}
             {titleParts.jiraKey && (
-              <a
-                href={`https://hello.planet.com/jira/browse/${titleParts.jiraKey}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="shrink-0"
-                title={titleParts.jiraText || titleParts.jiraKey}
-                onClick={e => e.stopPropagation()}
-              >
-                <Badge variant="outline" className="text-[9px] px-1 py-0 border-amber-700/50 bg-amber-500/5 text-amber-500 cursor-pointer hover:bg-amber-500/10">
-                  <Ticket className="h-2.5 w-2.5 mr-0.5" />{titleParts.jiraKey}
-                </Badge>
-              </a>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <a
+                    href={`https://hello.planet.com/jira/browse/${titleParts.jiraKey}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    <Badge variant="outline" className="text-[9px] px-1 py-0 border-amber-700/50 bg-amber-500/5 text-amber-500 cursor-pointer hover:bg-amber-500/10">
+                      <Ticket className="h-2.5 w-2.5 mr-0.5" />{titleParts.jiraKey}
+                    </Badge>
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-sm whitespace-pre-wrap break-words">
+                  {titleParts.jiraText || titleParts.jiraKey}
+                </TooltipContent>
+              </Tooltip>
             )}
             {titleParts.mrNumber && (
               <a
@@ -314,7 +329,6 @@ export function AgentRow({
                 target="_blank"
                 rel="noopener noreferrer"
                 className="shrink-0"
-                title={titleParts.mrRepo ? `${titleParts.mrRepo} !${titleParts.mrNumber}` : `MR !${titleParts.mrNumber}`}
                 onClick={e => e.stopPropagation()}
               >
                 <Badge variant="outline" className="text-[9px] px-1 py-0 border-violet-700/50 bg-violet-500/5 text-violet-400 cursor-pointer hover:bg-violet-500/10">
@@ -329,6 +343,7 @@ export function AgentRow({
                 </Badge>
               </span>
             )}
+            </TooltipProvider>
             <p className="text-sm text-zinc-200 truncate font-medium">
               {titleParts.cleanTitle}
             </p>
