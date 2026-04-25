@@ -71,18 +71,21 @@ interface JiraSummaryProps {
   onTicketClick?: (jiraKey: string) => void;
   /** URL param prefix to avoid collisions when used on multiple pages */
   urlPrefix?: string;
+  /** Override default JIRA project keys (from project config) */
+  jiraProjectKeys?: string[];
 }
 
 type SortField = "key" | "summary" | "status" | "assignee" | "age";
 type SortDirection = "asc" | "desc";
 
-export function JiraSummary({ hideProjectFilter = false, onTicketClick, urlPrefix = "jira" }: JiraSummaryProps) {
+export function JiraSummary({ hideProjectFilter = false, onTicketClick, urlPrefix = "jira", jiraProjectKeys }: JiraSummaryProps) {
   const p = urlPrefix ? `${urlPrefix}.` : "";
+  const defaultKeys = jiraProjectKeys && jiraProjectKeys.length > 0 ? jiraProjectKeys : ["COMPUTE"];
   const [assigneeFilter, setAssigneeFilter] = useUrlParam(`${p}assignee`, "all") as [AssigneeFilter, (v: string) => void];
   const [selectedLabel, setSelectedLabel] = useUrlParam(`${p}label`, "all");
   const [selectedStatuses, setSelectedStatuses] = useUrlArrayParam(`${p}statuses`, DEFAULT_STATUSES);
   const [searchQuery, setSearchQuery] = useState("");
-  const [jiraProjects, setJiraProjects] = useUrlArrayParam(`${p}projects`, ["COMPUTE"]);
+  const [jiraProjects, setJiraProjects] = useUrlArrayParam(`${p}projects`, defaultKeys);
   const [showProjectFilter, setShowProjectFilter] = useState(false);
   const [sortField, setSortField] = useUrlParam(`${p}sort`, "age") as [SortField, (v: string) => void];
   const [sortDirection, setSortDirection] = useUrlParam(`${p}sortDir`, "asc") as [SortDirection, (v: string) => void];

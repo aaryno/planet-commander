@@ -108,6 +108,7 @@ class GitLabMRScanStatsResponse(BaseModel):
 @router.get("", response_model=GitLabMRListResponse)
 async def list_mrs(
     repository: Optional[str] = None,
+    repositories: Optional[List[str]] = Query(None, alias="projects"),
     state: Optional[str] = None,
     author: Optional[str] = None,
     jira_key: Optional[str] = None,
@@ -117,16 +118,29 @@ async def list_mrs(
     """List GitLab merge requests.
 
     Args:
-        repository: Filter by repository (e.g., "wx/wx", "product/g4-wk/g4")
+        repository: Filter by single repository path
+        repositories: Filter by multiple repo paths (query param: ?projects=wx/wx&projects=wx/eso-golang)
         state: Filter by state ("opened", "merged", "closed")
         author: Filter by author username
         jira_key: Filter by JIRA key
         limit: Maximum number of MRs to return (max: 200, default: 50)
-
-    Returns:
-        List of merge requests with metadata
     """
     service = GitLabMRService(db)
+
+    if repositories and not repository:
+        all_mrs = []
+        for repo in repositories:
+            repo_mrs = await service.search_mrs(
+                repository=repo, state=state, author=author,
+                jira_key=jira_key, limit=limit,
+            )
+            all_mrs.extend(repo_mrs)
+        all_mrs.sort(key=lambda m: m.updated_at or m.created_at, reverse=True)
+        all_mrs = all_mrs[:limit]
+        return GitLabMRListResponse(
+            mrs=[GitLabMRResponse.from_model(mr) for mr in all_mrs],
+            total=len(all_mrs),
+        )
 
     mrs = await service.search_mrs(
         repository=repository,

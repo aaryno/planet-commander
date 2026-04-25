@@ -51,13 +51,15 @@ function buildCards(
         hideProjectFilter={true}
         onTicketClick={onJiraClick}
         urlPrefix={`${project.key}.jira`}
+        jiraProjectKeys={project.jira_project_keys}
       />
     );
     layout.push({ i: "jira", x: 0, y: row, w: 6, h: 6, minW: 4, minH: 3 });
   }
 
   if (project.repositories.length > 0) {
-    cards.mrs = <OpenMRs hideProjectFilter={true} hideProjectColumn={true} />;
+    const repoPaths = project.repositories.map(r => r.path);
+    cards.mrs = <OpenMRs hideProjectFilter={true} hideProjectColumn={true} repositories={repoPaths} />;
     layout.push({ i: "mrs", x: 6, y: row, w: 6, h: 6, minW: 4, minH: 3 });
     if (!cards.jira) {
       const last = layout[layout.length - 1];
