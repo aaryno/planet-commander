@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { GitBranch, FolderOpen, MessageSquare, ChevronDown, ChevronRight, EyeOff, Eye, Zap, Hash, ExternalLink, Terminal, LayoutGrid, ShoppingCart, PanelRight } from "lucide-react";
+import { FileText, GitBranch, FolderOpen, MessageSquare, ChevronDown, ChevronRight, EyeOff, Eye, Zap, Hash, ExternalLink, Terminal, LayoutGrid, ShoppingCart, PanelRight } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ExpandableRow } from "@/components/shared/ExpandableRow";
 import { AgentExpanded } from "@/components/expanded/AgentExpanded";
 import { Badge } from "@/components/ui/badge";
@@ -143,6 +149,42 @@ export function AgentRow({
               {agent.managed_by === "dashboard" ? "dashboard" : "vscode"}
             </Badge>
           </div>
+          {/* Artifact badges */}
+          {agent.artifacts.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1">
+              {agent.artifacts.length <= 2 ? (
+                agent.artifacts.map((a, i) => (
+                  <Badge
+                    key={i}
+                    variant="outline"
+                    className="text-emerald-400 border-emerald-600/50 bg-emerald-500/5 text-[10px] px-1.5 py-0 gap-1 max-w-[200px]"
+                    title={a.path}
+                  >
+                    <FileText className="h-2.5 w-2.5 shrink-0" />
+                    <span className="truncate">{a.path.split("/").pop()}</span>
+                  </Badge>
+                ))
+              ) : (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="inline-flex items-center gap-1 rounded-md border border-emerald-600/50 bg-emerald-500/5 text-emerald-400 text-[10px] px-1.5 py-0.5 hover:bg-emerald-500/10 transition-colors">
+                      <FileText className="h-2.5 w-2.5" />
+                      {agent.artifacts.length} artifacts
+                      <ChevronDown className="h-2.5 w-2.5" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="bg-zinc-900 border-zinc-700 max-w-xs">
+                    {agent.artifacts.map((a, i) => (
+                      <DropdownMenuItem key={i} className="text-zinc-300 text-xs focus:bg-zinc-800">
+                        <FileText className="h-3 w-3 text-emerald-400 mr-2 shrink-0" />
+                        <span className="truncate">{a.path.split("/").pop()}</span>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {onAgentClick && (
