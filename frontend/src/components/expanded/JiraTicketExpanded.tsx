@@ -11,6 +11,7 @@ import { ExternalLinks } from "@/components/shared/ExternalLinks";
 import { parseJiraMarkup } from "@/lib/jira-formatting";
 import { api } from "@/lib/api";
 import type { Agent } from "@/lib/api";
+import { jiraUrl } from "@/lib/urls";
 
 interface JiraTicketExpandedProps {
   jiraKey: string;
@@ -80,10 +81,10 @@ export function JiraTicketExpanded({ jiraKey, onOpenAgent, onOpenInSidebar }: Ji
     : null;
 
   const externalLinks: Array<{ label: string; url: string }> = [
-    { label: "JIRA", url: `https://hello.planet.com/jira/browse/${jiraKey}` },
+    { label: "JIRA", url: jiraUrl(jiraKey) },
   ];
   if (ticket.epic_key) {
-    externalLinks.push({ label: "Epic", url: `https://hello.planet.com/jira/browse/${ticket.epic_key}` });
+    externalLinks.push({ label: "Epic", url: jiraUrl(ticket.epic_key) });
   }
 
   return (
@@ -102,7 +103,7 @@ export function JiraTicketExpanded({ jiraKey, onOpenAgent, onOpenInSidebar }: Ji
           </Button>
         )}
         <a
-          href={`https://hello.planet.com/jira/browse/${jiraKey}`}
+          href={jiraUrl(jiraKey)}
           target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}

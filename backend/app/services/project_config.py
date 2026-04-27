@@ -10,11 +10,10 @@ from pathlib import Path
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.models.project import Project
 
 logger = logging.getLogger(__name__)
-
-GITLAB_BASE_URL = "https://hello.planet.com/code"
 CODE_DIR = Path.home() / "code"
 WORKSPACES_DIR = Path.home() / "workspaces"
 
@@ -94,7 +93,7 @@ class ProjectConfigService:
                 continue
             result[p.key] = {
                 "repo": path,
-                "web_url": f"{GITLAB_BASE_URL}/{path}",
+                "web_url": f"{settings.gitlab_base_url}/{path}",
             }
         return result
 

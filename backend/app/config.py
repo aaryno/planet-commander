@@ -14,6 +14,9 @@ def _load_local_config() -> dict:
     return {}
 
 
+_local_config = _load_local_config()
+
+
 class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://planet_ops:planet_ops_local@localhost:9432/planet_ops"
     database_url_sync: str = "postgresql://planet_ops:planet_ops_local@localhost:9432/planet_ops"
@@ -38,6 +41,20 @@ class Settings(BaseSettings):
     # Loaded from local config — empty by default, DB-derived map is primary
     project_path_map: dict[str, str] = {}
 
+    # Base URLs — loaded from local config, no defaults committed
+    gitlab_base_url: str = ""
+    gitlab_api_url: str = ""
+    jira_base_url: str = ""
+    grafana_base_url: str = ""
+    slack_base_url: str = ""
+
+    # User identity
+    user_display_name: str = ""
+
+    # Notification channels
+    warning_channel: str = ""
+    alert_channel: str = ""
+
     # Polling intervals (seconds)
     poll_agents: int = 30
     poll_mrs: int = 120
@@ -52,16 +69,16 @@ class Settings(BaseSettings):
 
 
 def _build_settings() -> "Settings":
-    local = _load_local_config()
     overrides = {}
-    if "project_path_map" in local:
-        overrides["project_path_map"] = local["project_path_map"]
-    if "gdrive_shared" in local:
-        overrides["gdrive_shared"] = local["gdrive_shared"]
-    if "database_url" in local:
-        overrides["database_url"] = local["database_url"]
-    if "database_url_sync" in local:
-        overrides["database_url_sync"] = local["database_url_sync"]
+    for key in (
+        "project_path_map", "gdrive_shared",
+        "database_url", "database_url_sync",
+        "gitlab_base_url", "gitlab_api_url",
+        "jira_base_url", "grafana_base_url", "slack_base_url",
+        "user_display_name", "warning_channel", "alert_channel",
+    ):
+        if key in _local_config:
+            overrides[key] = _local_config[key]
     return Settings(**overrides)
 
 

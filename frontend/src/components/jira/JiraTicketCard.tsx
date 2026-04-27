@@ -6,6 +6,7 @@ import type { JiraTicketEnhanced } from "@/lib/api";
 import { Link as LinkIcon } from "lucide-react";
 import Link from "next/link";
 import { JIRA_STATUS_COLORS, JIRA_PRIORITY_COLORS, getStatusColor } from "@/lib/status-colors";
+import { jiraUrl } from "@/lib/urls";
 
 interface JiraTicketCardProps {
   ticket: JiraTicketEnhanced;
@@ -70,7 +71,7 @@ export function JiraTicketCard({ ticket, onClick, compact = false, showRelations
           className="text-cyan-400 border-cyan-600/50 bg-cyan-500/10 text-[10px] px-1.5 py-0.5 font-mono hover:bg-cyan-500/20 transition-colors"
         >
           <a
-            href={`https://hello.planet.com/jira/browse/${ticket.key}`}
+            href={jiraUrl(ticket.key)}
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}

@@ -235,7 +235,11 @@ def extract_mr_references(session: SessionEntry) -> list[dict]:
 
     import json, re
     mrs: dict[str, dict] = {}
-    mr_pattern = re.compile(r'(?:https://hello\.planet\.com/code/([\w/-]+)/-/merge_requests/(\d+))|(?:!(\d+))')
+    gitlab_base = settings.gitlab_base_url
+    if not gitlab_base:
+        return mrs
+    escaped_base = re.escape(gitlab_base)
+    mr_pattern = re.compile(rf'(?:{escaped_base}/([\w/-]+)/-/merge_requests/(\d+))|(?:!(\d+))')
 
     try:
         with open(jsonl_path, "r", errors="replace") as f:
@@ -250,7 +254,7 @@ def extract_mr_references(session: SessionEntry) -> list[dict]:
                         mrs[key] = {
                             "repo": repo,
                             "iid": int(mr_num_url),
-                            "url": f"https://hello.planet.com/code/{repo}/-/merge_requests/{mr_num_url}",
+                            "url": f"{gitlab_base}/{repo}/-/merge_requests/{mr_num_url}",
                         }
     except Exception:
         pass

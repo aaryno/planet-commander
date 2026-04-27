@@ -10,6 +10,7 @@ import json
 import subprocess
 from pathlib import Path
 
+from app.config import settings
 from app.database import get_db
 
 router = APIRouter(prefix="/api/heartbeat", tags=["heartbeat"])
@@ -370,7 +371,7 @@ def _prom_query(promql, token):
         r = subprocess.run([
             "curl", "-s", "-G", "--max-time", "10",
             "-H", f"Authorization: Bearer {token}",
-            "https://planet.grafana.net/api/datasources/proxy/12/api/v1/query",
+            f"{settings.grafana_base_url}/api/datasources/proxy/12/api/v1/query",
             "--data-urlencode", f"query={promql.strip()}",
             "--data-urlencode", f"time={int(_time.time())}",
         ], capture_output=True, text=True, timeout=15)
@@ -672,7 +673,7 @@ async def get_g4_detail(cluster_group: str, lookback: str = Query(default="5m"),
             r = _sp.run([
                 "curl", "-s", "-G", "--max-time", "10",
                 "-H", f"Authorization: Bearer {token}",
-                "https://planet.grafana.net/api/datasources/proxy/12/api/v1/query",
+                f"{settings.grafana_base_url}/api/datasources/proxy/12/api/v1/query",
                 "--data-urlencode", f"query={promql}",
                 "--data-urlencode", f"time={int(__import__('time').time())}",
             ], capture_output=True, text=True, timeout=15)
@@ -771,7 +772,7 @@ async def get_orders_detail(lookback: str = Query(default="5m"), db: AsyncSessio
         try:
             r = _sp.run(["curl", "-s", "-G", "--max-time", "10",
                 "-H", f"Authorization: Bearer {token}",
-                "https://planet.grafana.net/api/datasources/proxy/12/api/v1/query",
+                f"{settings.grafana_base_url}/api/datasources/proxy/12/api/v1/query",
                 "--data-urlencode", f"query={promql}",
                 "--data-urlencode", f"time={int(__import__('time').time())}",
             ], capture_output=True, text=True, timeout=15)
@@ -787,7 +788,7 @@ async def get_orders_detail(lookback: str = Query(default="5m"), db: AsyncSessio
     return {
         "service": "OrdersV2",
         "lookback": lb,
-        "grafana_url": "https://planet.grafana.net/d/iqRkSMa4z/ordersv2-slis?orgId=1&var-env=live",
+        "grafana_url": f"{settings.grafana_base_url}/d/iqRkSMa4z/ordersv2-slis?orgId=1&var-env=live",
         "slis": {
             "request_to_queue": {
                 "p50": _q(f'histogram_quantile(0.50, sum(rate(ordersv2_control_plane_api_request_to_queue_duration_secs_bucket{{env="live"}}[{lb}])) by (le))'),
@@ -841,7 +842,7 @@ def _sync_subs_detail(lb: str = "5m"):
         try:
             r = subprocess.run(["curl", "-s", "-G", "--max-time", "10",
                 "-H", f"Authorization: Bearer {token}",
-                "https://planet.grafana.net/api/datasources/proxy/12/api/v1/query",
+                f"{settings.grafana_base_url}/api/datasources/proxy/12/api/v1/query",
                 "--data-urlencode", f"query={promql}",
                 "--data-urlencode", f"time={int(__import__('time').time())}",
             ], capture_output=True, text=True, timeout=15)
@@ -858,7 +859,7 @@ def _sync_subs_detail(lb: str = "5m"):
         try:
             r = subprocess.run(["curl", "-s", "-G", "--max-time", "10",
                 "-H", f"Authorization: Bearer {token}",
-                "https://planet.grafana.net/api/datasources/proxy/12/api/v1/query",
+                f"{settings.grafana_base_url}/api/datasources/proxy/12/api/v1/query",
                 "--data-urlencode", f"query={promql}",
                 "--data-urlencode", f"time={int(__import__('time').time())}",
             ], capture_output=True, text=True, timeout=15)
@@ -876,7 +877,7 @@ def _sync_subs_detail(lb: str = "5m"):
     return {
         "service": "Subscriptions (fair-queue)",
         "lookback": lb,
-        "grafana_url": "https://planet.grafana.net/d/bdc411a1c33a5767d31d3bcf30d8f81b23900fa4/fair-queue?orgId=1&var-namespace=live&var-environment=live",
+        "grafana_url": f"{settings.grafana_base_url}/d/bdc411a1c33a5767d31d3bcf30d8f81b23900fa4/fair-queue?orgId=1&var-namespace=live&var-environment=live",
         "throughput": {
             "pushed_hr": _q(f'sum(rate(fair_queue_messages_pushed{{environment="live",group=~"{GRP}"}}[{lb}]))*3600'),
             "pulled_hr": _q(f'sum(rate(fair_queue_messages_pulled{{environment="live",group=~"{GRP}"}}[{lb}]))*3600'),

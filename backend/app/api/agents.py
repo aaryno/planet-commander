@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 logger = logging.getLogger(__name__)
 
 from sqlalchemy import select
+from app.config import settings
 from app.database import get_db, async_session
 from app.services.agent_service import (
     get_agent_by_id,
@@ -33,7 +34,7 @@ def _inject_jira_context(message: str, agent: dict) -> str:
     if not jira_key:
         return message
 
-    context = f"[Context: You are working on JIRA ticket {jira_key}. You can view it at https://hello.planet.com/jira/browse/{jira_key}]\n\n"
+    context = f"[Context: You are working on JIRA ticket {jira_key}. You can view it at {settings.jira_base_url}/browse/{jira_key}]\n\n"
     return context + message
 
 

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { parseJiraMarkup } from "@/lib/jira-formatting";
 import type { JiraTicketResult } from "@/lib/api";
+import { gitlabUrl, jiraUrl } from "@/lib/urls";
 
 interface JiraCardProps {
   jiraKey: string;
@@ -101,7 +102,7 @@ export function JiraCard({
   // Get avatar URL for a mentioned user (by username from code.earth.planet.com)
   const getMentionedUserAvatar = (username: string): string => {
     // GitLab avatar URL pattern
-    return `https://hello.planet.com/code/uploads/-/system/user/avatar/${username}.png`;
+    return gitlabUrl(`uploads/-/system/user/avatar/${username}.png`);
   };
 
   useEffect(() => {
@@ -187,7 +188,7 @@ export function JiraCard({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <a
-                href={`https://hello.planet.com/jira/browse/${ticket.key}`}
+                href={jiraUrl(ticket.key)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm font-medium text-cyan-400 hover:text-cyan-300 flex items-center gap-1"

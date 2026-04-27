@@ -11,6 +11,8 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
+
 logger = logging.getLogger(__name__)
 
 
@@ -70,7 +72,7 @@ async def build_jira_context(jira_key: str, db: AsyncSession) -> str:
     issue = result.scalar_one_or_none()
 
     lines = [f"[JIRA Ticket: {jira_key}]"]
-    lines.append(f"URL: https://hello.planet.com/jira/browse/{jira_key}")
+    lines.append(f"URL: {settings.jira_base_url}/browse/{jira_key}")
 
     if issue:
         if issue.summary:

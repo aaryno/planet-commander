@@ -10,6 +10,7 @@ import { api, DetailedMR } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { extractJiraKey } from "@/lib/utils";
 import { formatHoursAgo } from "@/lib/time-utils";
+import { jiraUrl } from "@/lib/urls";
 
 type SortField = "created" | "updated" | "project" | "author" | "status";
 type SortDirection = "asc" | "desc";
@@ -459,7 +460,7 @@ export function OpenMRs({ hideProjectFilter = false, hideProjectColumn = false, 
                                 className="text-cyan-400 border-cyan-600/50 bg-cyan-500/10 text-[10px] px-1.5 py-0.5 font-mono hover:bg-cyan-500/20 transition-colors shrink-0"
                               >
                                 <a
-                                  href={`https://hello.planet.com/jira/browse/${jiraKey}`}
+                                  href={jiraUrl(jiraKey!)}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   onClick={(e) => e.stopPropagation()}

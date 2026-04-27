@@ -13,6 +13,7 @@ from app.models import (
     LinkSourceType,
     LinkStatus,
 )
+from app.config import settings
 from app.services.entity_link import EntityLinkService
 
 
@@ -261,7 +262,7 @@ class LinkInferenceService:
                         link_metadata={
                             "dashboard_uid": dash_uid,
                             "dashboard_name": dash_name,
-                            "grafana_url": f"https://planet.grafana.net/d/{dash_uid}",
+                            "grafana_url": f"{settings.grafana_base_url}/d/{dash_uid}",
                             "matched_keywords": [kw for kw in keywords if kw in text],
                             "filter_hint": filter_hint,
                         },

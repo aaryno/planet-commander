@@ -8,10 +8,11 @@ import logging
 import re
 from pathlib import Path
 
+from app.config import settings
+
 logger = logging.getLogger(__name__)
 
 REPO = "temporal/temporalio-cloud"
-REPO_WEB_URL = "https://hello.planet.com/code/temporal/temporalio-cloud"
 GLAB_DIR = Path.home() / "tools" / "glab"
 GLAB_MR = str(GLAB_DIR / "glab-mr")
 GLAB_PIPELINE = str(GLAB_DIR / "glab-pipeline")
@@ -45,6 +46,7 @@ def _parse_mr_list(output: str) -> list[dict]:
     Actual format:
     !99\ttemporal/temporalio-cloud!99\tUpdate tenant namespace membership\t(main) <- (koobz/update-membership)
     """
+    repo_web_url = f"{settings.gitlab_base_url}/{REPO}"
     mrs = []
     for line in output.strip().split("\n"):
         line = line.strip()
@@ -68,7 +70,7 @@ def _parse_mr_list(output: str) -> list[dict]:
                     "iid": iid,
                     "title": title,
                     "branch": branch,
-                    "url": f"{REPO_WEB_URL}/-/merge_requests/{iid}",
+                    "url": f"{repo_web_url}/-/merge_requests/{iid}",
                 })
                 continue
 
@@ -80,7 +82,7 @@ def _parse_mr_list(output: str) -> list[dict]:
                 "iid": iid,
                 "title": match.group(2).strip(),
                 "branch": "",
-                "url": f"{REPO_WEB_URL}/-/merge_requests/{iid}",
+                "url": f"{repo_web_url}/-/merge_requests/{iid}",
             })
     return mrs
 

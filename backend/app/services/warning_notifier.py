@@ -34,9 +34,10 @@ class WarningNotifier:
         Args:
             db: Database session (optional, for Slack service)
         """
-        self.enabled = True  # TODO: Load from config
-        self.warning_channel = "#compute-platform-notifications"  # TODO: Load from config
-        self.alert_channel = "#compute-platform"  # TODO: Load from config
+        from app.config import settings
+        self.enabled = True
+        self.warning_channel = settings.warning_channel or "#notifications"
+        self.alert_channel = settings.alert_channel or "#alerts"
         self.slack_service = SlackNotificationService(db) if db else None
 
     async def notify_warning_detected(self, warning: WarningEvent) -> bool:

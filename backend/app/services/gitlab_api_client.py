@@ -10,31 +10,22 @@ from typing import Any, Optional
 
 import httpx
 import yaml
+from urllib.parse import urlparse
+
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-# glab CLI config location
 _GLAB_CONFIG_PATH = Path.home() / ".config" / "glab-cli" / "config.yml"
 
-# GitLab API base URL (Planet uses hello.planet.com/code as API host)
-_GITLAB_API_BASE = "https://hello.planet.com/code/api/v4"
-
-# Lazy-loaded token
 _api_token: Optional[str] = None
 
 
 def _load_token() -> str:
     """Load GitLab API token from glab CLI config.
 
-    Reads the token from ~/.config/glab-cli/config.yml under
-    hosts > hello.planet.com > token.
-
-    Returns:
-        API token string
-
-    Raises:
-        FileNotFoundError: If config file doesn't exist
-        ValueError: If token not found in config
+    Reads the token from ~/.config/glab-cli/config.yml, using the
+    hostname from settings.gitlab_base_url to find the right host entry.
     """
     global _api_token
     if _api_token is not None:
@@ -43,21 +34,21 @@ def _load_token() -> str:
     if not _GLAB_CONFIG_PATH.exists():
         raise FileNotFoundError(
             f"glab CLI config not found at {_GLAB_CONFIG_PATH}. "
-            "Expected glab config with GitLab token."
+            "Run 'glab auth login' to configure."
         )
 
     with open(_GLAB_CONFIG_PATH) as f:
         config = yaml.safe_load(f)
 
-    # Extract token from hosts > hello.planet.com > token
     hosts = config.get("hosts", {})
-    planet_host = hosts.get("hello.planet.com", {})
-    token = planet_host.get("token")
+    gitlab_host = urlparse(settings.gitlab_base_url).hostname or ""
+    host_config = hosts.get(gitlab_host, {})
+    token = host_config.get("token")
 
     if not token:
         raise ValueError(
             f"GitLab token not found in {_GLAB_CONFIG_PATH} "
-            "under hosts > hello.planet.com > token"
+            f"under hosts > {gitlab_host} > token"
         )
 
     _api_token = token
@@ -72,7 +63,8 @@ class GitLabAPIClient:
     from the glab CLI configuration.
     """
 
-    def __init__(self, base_url: str = _GITLAB_API_BASE, timeout: float = 30.0):
+    def __init__(self, base_url: str | None = None, timeout: float = 30.0):
+        base_url = base_url or settings.gitlab_api_url
         self.base_url = base_url
         self.timeout = timeout
         self._client: Optional[httpx.AsyncClient] = None

@@ -14,6 +14,7 @@ import { getLabelColor } from "@/lib/label-colors";
 import { parseJiraMarkup } from "@/lib/jira-formatting";
 import { JIRA_STATUS_COLORS, JIRA_PRIORITY_COLORS } from "@/lib/status-colors";
 import { formatTimestampAgo } from "@/lib/time-utils";
+import { jiraUrl } from "@/lib/urls";
 
 interface JiraWorkspaceProps {
   jiraKey: string;
@@ -137,7 +138,7 @@ export function JiraWorkspace({ jiraKey, project, onClose, onOpenAgent, onBreako
 
           {/* External link */}
           <a
-            href={`https://hello.planet.com/jira/browse/${jiraKey}`}
+            href={jiraUrl(jiraKey)}
             target="_blank"
             rel="noopener noreferrer"
             className="text-zinc-500 hover:text-zinc-300 transition-colors"

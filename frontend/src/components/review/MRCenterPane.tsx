@@ -22,6 +22,7 @@ import { CIStatusLink } from "@/components/shared/CIStatusLink";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { parseJiraMarkup } from "@/lib/jira-formatting";
+import { jiraUrl, gitlabMrUrl } from "@/lib/urls";
 
 interface MRCenterPaneProps {
   mr: DetailedMR | null;
@@ -133,7 +134,7 @@ function JiraContextCard({ jiraKey }: { jiraKey: string }) {
         <div className="flex items-center gap-2">
           <span className="text-zinc-500 font-medium">JIRA</span>
           <a
-            href={`https://hello.planet.com/jira/browse/${jiraKey}`}
+            href={jiraUrl(jiraKey)}
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
@@ -197,7 +198,7 @@ function JiraContextCard({ jiraKey }: { jiraKey: string }) {
 
           {/* External link */}
           <a
-            href={`https://hello.planet.com/jira/browse/${jiraKey}`}
+            href={jiraUrl(jiraKey)}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-[10px] text-zinc-500 hover:text-zinc-300 transition-colors"
@@ -652,7 +653,7 @@ export function MRCenterPane({
 
   const gitlabPath = getGitlabProjectPath(mr.project);
   const mrUrl =
-    mr.url || `https://hello.planet.com/code/${gitlabPath}/-/merge_requests/${mr.iid}`;
+    mr.url || gitlabMrUrl(gitlabPath, mr.iid);
   const approved = mr.reviews && mr.reviews.length > 0;
 
   const tabs: Array<{ key: "diff" | "comments" | "pipeline"; label: string }> = [

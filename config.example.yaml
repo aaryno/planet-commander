@@ -1,0 +1,25 @@
+# Planet Commander - Local Configuration
+# Copy to ~/.config/planet-commander/config.yaml and fill in your values.
+
+# Base URLs for your GitLab, JIRA, Grafana, and Slack instances
+gitlab_base_url: https://gitlab.example.com
+gitlab_api_url: https://gitlab.example.com/api/v4
+jira_base_url: https://jira.example.com
+grafana_base_url: https://grafana.example.com
+slack_base_url: https://your-org.slack.com
+
+# Your display name in JIRA (used for "me" filters)
+user_display_name: Your Name
+
+# Slack channels for warning/alert notifications (optional)
+# warning_channel: "#your-team-notifications"
+# alert_channel: "#your-team"
+
+# Google Drive shared folder (optional)
+# gdrive_shared: ~/Library/CloudStorage/GoogleDrive-you@example.com/Shared drives
+
+# Claude Code session dir → project key mapping (optional)
+# Falls back to DB-derived mapping from Project.repositories.
+# Only needed for workspace dirs that don't follow ~/code/{gitlab_path}.
+# project_path_map:
+#   "-Users-you-workspaces-myproject": myproject

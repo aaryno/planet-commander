@@ -18,6 +18,7 @@
  */
 
 import React from "react";
+import { jiraUrl } from "@/lib/urls";
 
 export function parseJiraMarkup(text: string): React.ReactNode[] {
   if (!text) return [];
@@ -300,7 +301,7 @@ function parseInline(text: string): React.ReactNode[] {
     const ticketMatch = remaining.match(/\b([A-Z]{2,15}-\d{1,6})\b/);
     if (ticketMatch?.index != null) {
       candidates.push({ index: ticketMatch.index, length: ticketMatch[0].length,
-        node: <a key={`tk-${key++}`} href={`https://hello.planet.com/jira/browse/${ticketMatch[1]}`} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300 font-mono text-[11px]">{ticketMatch[1]}</a> });
+        node: <a key={`tk-${key++}`} href={jiraUrl(ticketMatch[1])} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300 font-mono text-[11px]">{ticketMatch[1]}</a> });
     }
 
     // Pick earliest match

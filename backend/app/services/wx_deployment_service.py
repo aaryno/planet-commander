@@ -6,6 +6,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, Dict, List, Any
 
+from app.config import settings
+
 logger = logging.getLogger(__name__)
 
 
@@ -117,7 +119,7 @@ class WXDeploymentService:
     ) -> Dict[str, str]:
         """Build GitLab and ArgoCD URLs for an environment."""
         return {
-            "commit_url": f"https://hello.planet.com/code/wx/wx/-/commit/{commit_sha}",
+            "commit_url": f"{settings.gitlab_base_url}/wx/wx/-/commit/{commit_sha}",
             "argocd_url": f"https://argocd.prod.planet-labs.com/applications/{argocd_app}?view=tree",
             "tigercli_url": f"https://tigercli.prod.planet-labs.com/deploy/wx/{env_name}",
         }
