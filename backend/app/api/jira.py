@@ -45,7 +45,7 @@ async def get_ticket(key: str, db: AsyncSession = Depends(get_db)):
         }
 
     # Fallback to JIRA API
-    tickets = await search_tickets(key, limit=1)
+    tickets = await search_tickets(key, limit=1, db=db)
     if not tickets:
         raise HTTPException(status_code=404, detail=f"Ticket not found: {key}")
     return tickets[0]
@@ -63,7 +63,7 @@ async def search_jira_tickets(
     if not query:
         # No query — return recent from API
         projects = [p.strip() for p in project.split(",") if p.strip()] if project else None
-        tickets = await search_tickets(q, projects=projects, limit=limit)
+        tickets = await search_tickets(q, projects=projects, limit=limit, db=db)
         return {"tickets": tickets, "total": len(tickets)}
 
     # Search local DB with ILIKE across external_key, title, assignee
@@ -108,7 +108,7 @@ async def search_jira_tickets(
     # Fallback to JIRA API if nothing found locally
     projects_list = [p.strip() for p in project.split(",") if p.strip()] if project else None
     try:
-        tickets = await search_tickets(q, projects=projects_list, limit=limit)
+        tickets = await search_tickets(q, projects=projects_list, limit=limit, db=db)
         return {"tickets": tickets, "total": len(tickets), "source": "api"}
     except Exception as e:
         logger.warning(f"JIRA API search failed: {e}")
@@ -116,8 +116,8 @@ async def search_jira_tickets(
 
 
 @router.get("/my-tickets")
-async def my_tickets():
-    tickets = await search_tickets("", limit=30)
+async def my_tickets(db: AsyncSession = Depends(get_db)):
+    tickets = await search_tickets("", limit=30, db=db)
     return {"tickets": tickets, "total": len(tickets)}
 
 
@@ -140,6 +140,7 @@ async def update_ticket(key: str):
 async def jira_summary(
     project: str | None = Query(None, description="JIRA project key"),
     sprint: str | None = Query(None, description="Sprint name"),
+    db: AsyncSession = Depends(get_db),
 ):
     """Get JIRA summary with 'Me' and 'Team' sections.
 
@@ -148,7 +149,7 @@ async def jira_summary(
     from app.services.jira_service import get_jira_summary
 
     try:
-        summary = await get_jira_summary(project=project)
+        summary = await get_jira_summary(project=project, db=db)
         return summary
     except Exception as e:
         logger.error("Failed to get JIRA summary: %s", e)

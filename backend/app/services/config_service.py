@@ -110,5 +110,15 @@ class ConfigService:
         )
 
 
+async def get_repos_to_scan_from_db(db) -> list[dict]:
+    """Get repos to scan from the projects database.
+
+    Returns repo configs with resolved local paths for all active projects.
+    Only includes repos that exist on disk at ~/code/{gitlab_path}.
+    """
+    from app.services.project_config import ProjectConfigService
+    return await ProjectConfigService(db).get_repo_scan_config()
+
+
 # Singleton instance
 config = ConfigService()

@@ -152,8 +152,15 @@ def _parse_unindexed_session(jsonl_path: Path, project_dir_name: str) -> Session
     )
 
 
-def map_project(project_dir_name: str) -> str:
-    """Map a Claude project directory name to a project key."""
+def map_project(project_dir_name: str, path_map: dict[str, str] | None = None) -> str:
+    """Map a Claude project directory name to a project key.
+
+    Args:
+        project_dir_name: The hyphenated dir name (e.g. "-Users-aaryn-code-wx-wx")
+        path_map: Optional DB-derived map. Falls back to settings.project_path_map.
+    """
+    if path_map and project_dir_name in path_map:
+        return path_map[project_dir_name]
     return settings.project_path_map.get(project_dir_name, "general")
 
 

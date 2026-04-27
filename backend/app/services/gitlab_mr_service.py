@@ -12,21 +12,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.gitlab_merge_request import GitLabMergeRequest
 from app.services.gitlab_api_client import get_gitlab_client
+from app.services.project_config import ProjectConfigService
 
 logger = logging.getLogger(__name__)
 
 
 class GitLabMRService:
     """Service for indexing and searching GitLab merge requests."""
-
-    # Default repositories to track
-    DEFAULT_REPOSITORIES = [
-        "wx/wx",
-        "product/g4-wk/g4",
-        "jobs/jobs",
-        "temporal/temporalio-cloud",
-        "eso/eso-golang"
-    ]
 
     # JIRA key pattern
     JIRA_KEY_PATTERN = re.compile(
@@ -36,6 +28,10 @@ class GitLabMRService:
 
     def __init__(self, db: AsyncSession):
         self.db = db
+
+    async def get_repositories(self) -> list[str]:
+        """Get all repo paths from active projects in the database."""
+        return await ProjectConfigService(self.db).get_all_repo_paths()
 
     def run_glab_command(self, args: List[str]) -> Optional[str]:
         """Run glab CLI command and return output.

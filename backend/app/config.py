@@ -33,15 +33,6 @@ class Settings(BaseSettings):
         "-Users-aaryn-claude": "general",
     }
 
-    # Team repos for MR scanning
-    team_repos: list[str] = [
-        "wx/wx",
-        "wx/eso-golang",
-        "product/g4-wk/g4",
-        "product/g4-wk/g4-task",
-        "temporal/temporalio-cloud",
-    ]
-
     # Polling intervals (seconds)
     poll_agents: int = 30
     poll_mrs: int = 120

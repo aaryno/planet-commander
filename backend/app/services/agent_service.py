@@ -77,6 +77,10 @@ async def sync_agents(db: AsyncSession) -> dict:
     new_count = 0
     updated_count = 0
 
+    # Build project path map from DB (merged with config fallback)
+    from app.services.project_config import ProjectConfigService
+    db_path_map = await ProjectConfigService(db).get_project_path_map()
+
     # Get project labels for auto-labeling
     project_labels = {}
     label_result = await db.execute(
@@ -89,7 +93,7 @@ async def sync_agents(db: AsyncSession) -> dict:
         if session.is_sidechain:
             continue
 
-        project = map_project(session.project_dir_name)
+        project = map_project(session.project_dir_name, path_map=db_path_map)
 
         # Check if agent already exists
         result = await db.execute(

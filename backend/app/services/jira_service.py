@@ -60,16 +60,31 @@ def _default_project() -> str:
 
 
 async def search_tickets(
-    query: str, project: str | None = None, projects: list[str] | None = None, limit: int = 20
+    query: str,
+    project: str | None = None,
+    projects: list[str] | None = None,
+    limit: int = 20,
+    db: "AsyncSession | None" = None,
 ) -> list[dict[str, Any]]:
     """Search JIRA tickets by key or text.
 
     If query looks like a ticket key (e.g. COMPUTE-1234), fetches directly.
     Otherwise does a text search within the given projects.
     Accepts either `project` (single) or `projects` (list).
+    When `db` is provided, uses project-configured JIRA keys from the database.
     """
     if not projects:
-        projects = [project] if project else [_default_project()]
+        if project:
+            if db:
+                from app.services.project_config import ProjectConfigService
+                projects = await ProjectConfigService(db).get_jira_keys(project) or [project]
+            else:
+                projects = [project]
+        elif db:
+            from app.services.project_config import ProjectConfigService
+            projects = await ProjectConfigService(db).get_all_jira_keys() or [_default_project()]
+        else:
+            projects = [_default_project()]
 
     # Build project filter clause
     if len(projects) == 1:
@@ -297,14 +312,25 @@ def _convert_jira_markup_to_markdown(text: str) -> str:
     return text
 
 
-async def get_jira_summary(project: str | None = None, current_user_email: str | None = None) -> dict[str, Any]:
+async def get_jira_summary(
+    project: str | None = None,
+    current_user_email: str | None = None,
+    db: "AsyncSession | None" = None,
+) -> dict[str, Any]:
     """Get JIRA summary with 'Me' and 'Team' sections.
 
     Returns tickets grouped by relationship and status.
+    When `db` is provided, resolves JIRA project keys from the database.
     """
     from datetime import datetime, timedelta
 
-    project = project or _default_project()
+    if not project:
+        if db:
+            from app.services.project_config import ProjectConfigService
+            all_keys = await ProjectConfigService(db).get_all_jira_keys()
+            project = all_keys[0] if all_keys else _default_project()
+        else:
+            project = _default_project()
 
     # Get current user from config if not provided
     if not current_user_email:

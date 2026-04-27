@@ -21,14 +21,6 @@ class Worktree:
     commit: str
     is_bare: bool = False
 
-
-# Known repo roots relative to workspaces_dir (the actual git repos, not workspace parents)
-REPO_ROOTS = [
-    "wx-1/wx",
-    "temporalio/temporalio-cloud",
-    "jobs/jobs",
-]
-
 # Host home dir prefix used in worktree paths output by git
 _HOST_HOME = str(Path.home())
 
@@ -56,13 +48,18 @@ def _to_display_path(raw_path: str) -> str:
         return raw_path
 
 
-def discover_worktrees() -> list[Worktree]:
-    """Run `git worktree list` across known repos and return all worktrees."""
-    worktrees = []
-    base_dir = settings.workspaces_dir
+def discover_worktrees(repo_roots: list[str] | None = None) -> list[Worktree]:
+    """Run `git worktree list` across repos and return all worktrees.
 
-    for repo_rel in REPO_ROOTS:
-        repo_path = base_dir / repo_rel
+    Args:
+        repo_roots: Absolute paths to git repo roots. If None, returns empty.
+    """
+    if not repo_roots:
+        return []
+
+    worktrees = []
+    for repo_path_str in repo_roots:
+        repo_path = Path(repo_path_str)
         if not repo_path.exists():
             logger.debug("Repo root not found: %s", repo_path)
             continue
@@ -129,7 +126,9 @@ _GENERIC_BRANCHES = {"main", "master", "HEAD", ""}
 
 async def enrich_agents_with_worktrees(db: AsyncSession) -> int:
     """Match worktrees to agents by git branch and update worktree_path."""
-    worktrees = discover_worktrees()
+    from app.services.project_config import ProjectConfigService
+    repo_roots = await ProjectConfigService(db).get_worktree_roots()
+    worktrees = discover_worktrees(repo_roots)
     if not worktrees:
         return 0
 
