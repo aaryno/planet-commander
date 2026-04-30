@@ -4,6 +4,7 @@ import { FileText, MessageSquare, GitBranch, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { WorkspaceDetail, Agent } from "@/lib/api";
 import type { TabId } from "../WorkspaceTabs";
+import { jiraUrl } from "@/lib/urls";
 
 interface OverviewTabProps {
   workspace: WorkspaceDetail;
@@ -38,7 +39,7 @@ export function OverviewTab({ workspace, onOpenAgent, onTabChange }: OverviewTab
                     {primaryTicket.key}
                   </Badge>
                   <a
-                    href={`https://hello.planet.com/jira/browse/${primaryTicket.key}`}
+                    href={jiraUrl(primaryTicket.key)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-zinc-500 hover:text-zinc-300 transition-colors"

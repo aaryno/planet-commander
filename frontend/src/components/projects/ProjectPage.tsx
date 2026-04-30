@@ -20,6 +20,7 @@ import type { Agent } from "@/lib/api";
 import type { LayoutItem } from "react-grid-layout";
 import { useUrlNullableParam, useUrlBoolParam } from "@/lib/use-url-state";
 import { PROJECT_COLORS } from "@/lib/status-colors";
+import { gitlabUrl } from "@/lib/urls";
 
 const ICON_MAP: Record<string, ReactNode> = {
   "git-branch": <GitBranch className="h-3.5 w-3.5" />,
@@ -55,8 +56,8 @@ interface ProjectPageProps {
 const STUB_LINKS: Record<string, Record<string, Array<{ label: string; url: string; icon: string }>>> = {
   wx: {
     git: [
-      { label: "wx (monorepo)", url: "https://hello.planet.com/code/wx/wx", icon: "git-branch" },
-      { label: "eso-golang", url: "https://hello.planet.com/code/wx/eso-golang", icon: "git-branch" },
+      { label: "wx (monorepo)", url: gitlabUrl("wx/wx"), icon: "git-branch" },
+      { label: "eso-golang", url: gitlabUrl("wx/eso-golang"), icon: "git-branch" },
     ],
     slack: [{ label: "#wx-users", url: "#", icon: "message-circle" }],
     grafana: [
@@ -71,8 +72,8 @@ const STUB_LINKS: Record<string, Record<string, Array<{ label: string; url: stri
   },
   g4: {
     git: [
-      { label: "g4 (main)", url: "https://hello.planet.com/code/product/g4-wk/g4", icon: "git-branch" },
-      { label: "g4-task", url: "https://hello.planet.com/code/product/g4-wk/g4-task", icon: "git-branch" },
+      { label: "g4 (main)", url: gitlabUrl("product/g4-wk/g4"), icon: "git-branch" },
+      { label: "g4-task", url: gitlabUrl("product/g4-wk/g4-task"), icon: "git-branch" },
     ],
     slack: [{ label: "#g4-users", url: "#", icon: "message-circle" }],
     grafana: [

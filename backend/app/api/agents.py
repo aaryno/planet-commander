@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 logger = logging.getLogger(__name__)
 
 from sqlalchemy import select
+from app.config import settings
 from app.database import get_db, async_session
 from app.services.agent_service import (
     get_agent_by_id,
@@ -33,7 +34,7 @@ def _inject_jira_context(message: str, agent: dict) -> str:
     if not jira_key:
         return message
 
-    context = f"[Context: You are working on JIRA ticket {jira_key}. You can view it at https://hello.planet.com/jira/browse/{jira_key}]\n\n"
+    context = f"[Context: You are working on JIRA ticket {jira_key}. You can view it at {settings.jira_base_url}/browse/{jira_key}]\n\n"
     return context + message
 
 
@@ -381,14 +382,16 @@ async def spawn_agent(request: SpawnAgentRequest, db: AsyncSession = Depends(get
     - working_directory override takes precedence over all above
     """
     import uuid
-    from app.api.worktrees import PROJECT_REPO_MAP, CreateWorktreeRequest, create_worktree
+    from app.api.worktrees import CreateWorktreeRequest, create_worktree
+    from app.services.project_config import ProjectConfigService
 
     working_dir = request.working_directory
     git_branch = request.worktree_branch
     worktree_display = request.worktree_path
 
     # Auto-create worktree if no explicit working dir and project supports it
-    if not working_dir and request.project and request.project in PROJECT_REPO_MAP:
+    worktree_map = await ProjectConfigService(db).get_worktree_map() if request.project else {}
+    if not working_dir and request.project and request.project in worktree_map:
         if request.worktree_path:
             # Selected an existing worktree - resolve ~ to home
             working_dir = request.worktree_path.replace("~", str(Path.home()))
@@ -399,7 +402,7 @@ async def spawn_agent(request: SpawnAgentRequest, db: AsyncSession = Depends(get
                 jira_key=request.jira_key,
                 checkout_branch=request.worktree_branch,
             )
-            wt_result = await create_worktree(wt_request)
+            wt_result = await create_worktree(wt_request, db=db)
             worktree_display = wt_result["path"]
             git_branch = wt_result["branch"]
             working_dir = worktree_display.replace("~", str(Path.home()))
@@ -502,9 +505,10 @@ async def cart_launch(request: CartLaunchRequest, db: AsyncSession = Depends(get
     creates a MERGED WorkContext, and backfills the context queue.
     """
     import uuid as uuid_mod
-    from app.api.worktrees import PROJECT_REPO_MAP, CreateWorktreeRequest, create_worktree
+    from app.api.worktrees import CreateWorktreeRequest, create_worktree
     from app.models.agent import Agent as AgentModel
     from app.models.entity_link import EntityLink, LinkType, LinkSourceType, LinkStatus
+    from app.services.project_config import ProjectConfigService
 
     # Validate source agents exist
     source_agents = []
@@ -544,16 +548,18 @@ async def cart_launch(request: CartLaunchRequest, db: AsyncSession = Depends(get
 
     if request.worktree_path:
         working_dir = request.worktree_path.replace("~", str(Path.home()))
-    elif request.project and request.project in PROJECT_REPO_MAP:
-        wt_request = CreateWorktreeRequest(
-            project=request.project,
-            jira_key=request.jira_key,
-            checkout_branch=request.worktree_branch,
-        )
-        wt_result = await create_worktree(wt_request)
-        worktree_display = wt_result["path"]
-        git_branch = wt_result["branch"]
-        working_dir = worktree_display.replace("~", str(Path.home()))
+    elif request.project:
+        worktree_map = await ProjectConfigService(db).get_worktree_map()
+        if request.project in worktree_map:
+            wt_request = CreateWorktreeRequest(
+                project=request.project,
+                jira_key=request.jira_key,
+                checkout_branch=request.worktree_branch,
+            )
+            wt_result = await create_worktree(wt_request, db=db)
+            worktree_display = wt_result["path"]
+            git_branch = wt_result["branch"]
+            working_dir = worktree_display.replace("~", str(Path.home()))
 
     # Spawn agent
     session_id = str(uuid_mod.uuid4())

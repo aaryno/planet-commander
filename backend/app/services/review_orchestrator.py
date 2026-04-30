@@ -28,18 +28,12 @@ from app.models.audit_finding import AuditFinding
 from app.models.audit_run import AuditRun
 from app.models.gitlab_merge_request import GitLabMergeRequest
 from app.models.mr_review import MRReview
+from app.services.project_config import ProjectConfigService
 
 logger = logging.getLogger(__name__)
 
 GLAB_DIR = Path.home() / "tools" / "glab"
 GLAB_MR = str(GLAB_DIR / "glab-mr")
-
-PROJECT_REPOS = {
-    "wx": "wx/wx",
-    "jobs": "jobs/jobs",
-    "g4": "product/g4",
-    "temporal": "temporal/temporalio-cloud",
-}
 
 
 @dataclass
@@ -56,9 +50,8 @@ class ReviewResult:
     error: str | None = None
 
 
-async def _fetch_diff(project: str, mr_iid: int) -> str | None:
+async def _fetch_diff(project: str, mr_iid: int, repo: str) -> str | None:
     """Fetch MR diff content via glab."""
-    repo = PROJECT_REPOS.get(project)
     if not repo:
         return None
 
@@ -85,9 +78,11 @@ async def _ensure_mr_in_db(
     db: AsyncSession, project: str, mr_iid: int
 ) -> GitLabMergeRequest | None:
     """Find MR in DB, or return None if not synced yet."""
-    repo = PROJECT_REPOS.get(project)
-    if not repo:
+    project_configs = await ProjectConfigService(db).get_gitlab_projects()
+    config = project_configs.get(project)
+    if not config:
         return None
+    repo = config["repo"]
 
     result = await db.execute(
         select(GitLabMergeRequest).where(
@@ -190,11 +185,19 @@ async def orchestrate_review(
 
     result = ReviewResult()
 
+    # Look up repo path from DB
+    project_configs = await ProjectConfigService(db).get_gitlab_projects()
+    config = project_configs.get(project, {})
+    repo = config.get("repo", "")
+    if not repo:
+        result.error = f"Unknown project: {project}"
+        return result
+
     # 1. Fetch MR details and diff in parallel
     try:
         mr_details, diff_content = await asyncio.gather(
-            _fetch_mr_details(project, mr_iid),
-            _fetch_diff(project, mr_iid),
+            _fetch_mr_details(project, mr_iid, repo),
+            _fetch_diff(project, mr_iid, repo),
         )
     except Exception as e:
         result.error = f"Failed to fetch MR details: {e}"
@@ -292,9 +295,11 @@ async def get_review_findings(
 
     Returns structured data for the Summary tab.
     """
-    repo = PROJECT_REPOS.get(project)
-    if not repo:
+    project_configs = await ProjectConfigService(db).get_gitlab_projects()
+    config = project_configs.get(project)
+    if not config:
         return {"findings": [], "personas": [], "status": "unknown"}
+    repo = config["repo"]
 
     # Find the MR
     mr_result = await db.execute(

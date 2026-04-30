@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Copy, Check } from "lucide-react";
+import { gitlabUrl } from "@/lib/urls";
 
 interface BranchBadgeProps {
   branch: string;
@@ -25,7 +26,7 @@ export function BranchBadge({ branch, targetBranch, project, compact = false }: 
   const displayBranch = branch.length > maxLen ? branch.slice(0, maxLen) + "..." : branch;
 
   const branchUrl = project
-    ? `https://hello.planet.com/code/${project}/-/tree/${encodeURIComponent(branch)}`
+    ? gitlabUrl(`${project}/-/tree/${encodeURIComponent(branch)}`)
     : undefined;
 
   const branchEl = branchUrl ? (

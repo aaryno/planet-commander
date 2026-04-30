@@ -283,9 +283,9 @@ async def scan_mrs(
     """
     service = GitLabMRService(db)
 
-    # Use default repositories if none specified
+    # Use DB-configured repositories if none specified
     if not repositories:
-        repositories = service.DEFAULT_REPOSITORIES
+        repositories = await service.get_repositories()
 
     results = []
     for repo in repositories:

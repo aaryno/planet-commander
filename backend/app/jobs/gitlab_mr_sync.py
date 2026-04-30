@@ -35,7 +35,7 @@ async def sync_gitlab_mrs() -> Dict:
                 "errors": []
             }
 
-            for repository in service.DEFAULT_REPOSITORIES:
+            for repository in await service.get_repositories():
                 logger.info(f"Scanning {repository}")
                 stats = await service.scan_repository_mrs(
                     repository,

@@ -11,6 +11,7 @@ import { formatTimestampAgo } from "@/lib/time-utils";
 import type { Agent, DetailedMR } from "@/lib/api";
 import { addAgentToAMV } from "@/lib/amv";
 import { useToast } from "@/components/ui/toast-simple";
+import { jiraUrl } from "@/lib/urls";
 
 interface AgentExpandedProps {
   agent: Agent;
@@ -109,7 +110,7 @@ export function AgentExpanded({ agent, onJoinChat, onSummarize }: AgentExpandedP
   if (agent.jira_key) {
     externalLinks.push({
       label: agent.jira_key,
-      url: `https://hello.planet.com/jira/browse/${agent.jira_key}`,
+      url: jiraUrl(agent.jira_key),
     });
   }
 
@@ -191,7 +192,7 @@ export function AgentExpanded({ agent, onJoinChat, onSummarize }: AgentExpandedP
             <div className="flex items-center gap-2">
               <span className="text-zinc-500">JIRA:</span>
               <a
-                href={`https://hello.planet.com/jira/browse/${agent.jira_key}`}
+                href={jiraUrl(agent.jira_key!)}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}

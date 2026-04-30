@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ExternalLinks } from "@/components/shared/ExternalLinks";
 import { Badge } from "@/components/ui/badge";
 import { formatTimestampAgo } from "@/lib/time-utils";
+import { gitlabMrUrl } from "@/lib/urls";
 
 interface DeploymentExpandedProps {
   tier: string;
@@ -22,8 +23,8 @@ const DEPLOY_MRS: Record<string, { iid: number; repo: string; label: string }> =
   "staging-01": { iid: 1084, repo: "wx/wx", label: "Staging Deploy" },
 };
 
-function deployMrUrl(repo: string, iid: number): string {
-  return `https://hello.planet.com/code/${repo}/-/merge_requests/${iid}`;
+function deployMrLink(repo: string, iid: number): string {
+  return gitlabMrUrl(repo, iid);
 }
 
 export function DeploymentExpanded({
@@ -86,7 +87,7 @@ export function DeploymentExpanded({
   if (deployMr) {
     links.push({
       label: `Deploy MR !${deployMr.iid}`,
-      url: deployMrUrl(deployMr.repo, deployMr.iid),
+      url: deployMrLink(deployMr.repo, deployMr.iid),
     });
   }
 
@@ -111,7 +112,7 @@ export function DeploymentExpanded({
         <div className="flex items-center gap-2 text-zinc-300">
           <span className="text-zinc-500">Deploy MR:</span>
           <a
-            href={deployMrUrl(deployMr.repo, deployMr.iid)}
+            href={deployMrLink(deployMr.repo, deployMr.iid)}
             target="_blank"
             rel="noopener noreferrer"
             className="text-blue-400 hover:text-blue-300 transition-colors"

@@ -10,6 +10,8 @@ from pathlib import Path
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
 
+from app.config import settings
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/infra", tags=["infrastructure"])
@@ -56,7 +58,7 @@ def _prom_query(promql: str, token: str) -> list:
             [
                 "curl", "-s", "-G", "--max-time", "10",
                 "-H", f"Authorization: Bearer {token}",
-                "https://planet.grafana.net/api/datasources/proxy/12/api/v1/query",
+                f"{settings.grafana_base_url}/api/datasources/proxy/12/api/v1/query",
                 "--data-urlencode", f"query={promql}",
                 "--data-urlencode", f"time={int(time.time())}",
             ],

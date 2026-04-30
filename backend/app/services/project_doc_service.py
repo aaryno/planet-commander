@@ -30,21 +30,29 @@ class ProjectDocService:
         "api", "database", "deployment", "monitoring", "logging"
     }
 
-    # Project name mappings
-    PROJECT_NAMES = ["wx", "g4", "jobs", "temporal", "prodissue", "eso"]
-
-    # Slack channel to project mapping
-    SLACK_CHANNEL_MAP = {
-        "#wx-dev": "wx",
-        "#wx-users": "wx",
-        "#g4-users": "g4",
-        "#jobs-users": "jobs",
-        "#temporalio-cloud": "temporal",
-        "#compute-platform": "compute",  # Multi-project
-    }
+    # Fallback project names (supplemented by DB projects at runtime)
+    PROJECT_NAMES = ["prodissue"]
 
     def __init__(self, db: AsyncSession):
         self.db = db
+
+    async def _get_project_names(self) -> list[str]:
+        """Get all active project keys from DB + fallback list."""
+        from app.services.project_config import ProjectConfigService
+        db_keys = await ProjectConfigService(self.db).get_active_project_keys()
+        return list(set(db_keys + self.PROJECT_NAMES))
+
+    async def _get_slack_channel_map(self) -> dict[str, str]:
+        """Build Slack channel→project mapping from DB projects."""
+        from app.services.project_config import ProjectConfigService
+        projects = await ProjectConfigService(self.db)._get_active_projects()
+        channel_map = {}
+        for p in projects:
+            for ch in (p.slack_channels or []):
+                name = ch.get("name", "")
+                if name:
+                    channel_map[name] = p.key
+        return channel_map
 
     async def scan_project_docs(self) -> Dict:
         """Scan ~/claude/projects/ for *-notes/*-claude.md files.
@@ -212,11 +220,13 @@ class ProjectDocService:
         parsed = self.parse_markdown(content)
 
         # Infer team from project name
-        team = "compute" if project_name in self.PROJECT_NAMES else None
+        project_names = await self._get_project_names()
+        team = "compute" if project_name in project_names else None
 
         # Infer Slack channels from project name
         slack_channels = []
-        for channel, proj in self.SLACK_CHANNEL_MAP.items():
+        channel_map = await self._get_slack_channel_map()
+        for channel, proj in channel_map.items():
             if proj == project_name:
                 slack_channels.append(channel)
 
@@ -377,21 +387,23 @@ class ProjectDocService:
             Project name or None
         """
         # Check JIRA labels
+        project_names = await self._get_project_names()
         if jira_labels:
             for label in jira_labels:
                 label_lower = label.lower()
-                if label_lower in self.PROJECT_NAMES:
+                if label_lower in project_names:
                     return label_lower
 
         # Check Slack channel
         if slack_channel:
-            if slack_channel in self.SLACK_CHANNEL_MAP:
-                return self.SLACK_CHANNEL_MAP[slack_channel]
+            channel_map = await self._get_slack_channel_map()
+            if slack_channel in channel_map:
+                return channel_map[slack_channel]
 
         # Check working directory
         if working_dir:
             path_lower = working_dir.lower()
-            for project in self.PROJECT_NAMES:
+            for project in project_names:
                 # Match patterns like ~/code/wx/, ~/workspaces/g4/, etc.
                 if f"/{project}/" in path_lower or f"/{project}-" in path_lower:
                     return project

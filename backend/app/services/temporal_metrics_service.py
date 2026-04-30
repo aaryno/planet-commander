@@ -9,9 +9,9 @@ from time import time
 
 import httpx
 
-logger = logging.getLogger(__name__)
+from app.config import settings
 
-GRAFANA_BASE = "https://planet.grafana.net"
+logger = logging.getLogger(__name__)
 GRAFANA_TOKEN_PATH = Path.home() / ".config" / "grafana-token"
 
 # Datasource UIDs from existing dashboard configs
@@ -43,7 +43,7 @@ async def _query_prometheus(
     if not token:
         return None
 
-    url = f"{GRAFANA_BASE}/api/datasources/proxy/{datasource_id}/api/v1/query"
+    url = f"{settings.grafana_base_url}/api/datasources/proxy/{datasource_id}/api/v1/query"
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
             resp = await client.get(

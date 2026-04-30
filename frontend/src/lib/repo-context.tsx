@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext } from "react";
+import { gitlabBlobUrl } from "@/lib/urls";
 
 export interface RepoInfo {
   /** GitLab project path, e.g. "wx/wx" */
@@ -51,13 +52,11 @@ export function fileToGitLabUrl(
   }
 
   // Extract line number suffix (:42)
-  let lineAnchor = "";
   let line: number | undefined;
   let cleanPath = resolved;
   const lineMatch = resolved.match(/:(\d+)$/);
   if (lineMatch) {
     line = parseInt(lineMatch[1], 10);
-    lineAnchor = `#L${line}`;
     cleanPath = resolved.slice(0, -lineMatch[0].length);
   }
 
@@ -66,7 +65,7 @@ export function fileToGitLabUrl(
     const normalized = workDir.endsWith("/") ? workDir : workDir + "/";
     if (cleanPath.startsWith(normalized)) {
       const relativePath = cleanPath.slice(normalized.length);
-      const url = `https://hello.planet.com/code/${repo.gitlabProject}/-/blob/${repo.branch}/${relativePath}${lineAnchor}`;
+      const url = gitlabBlobUrl(repo.gitlabProject, repo.branch, relativePath, line);
       return { url, relativePath, line };
     }
   }

@@ -5,6 +5,7 @@ import { MessageSquare, Users, Clock, AlertTriangle, ExternalLink, ChevronDown, 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SlackThreadDetail } from "@/lib/api";
+import { jiraUrl } from "@/lib/urls";
 
 interface SlackThreadSummaryProps {
   thread: SlackThreadDetail;
@@ -103,7 +104,7 @@ export function SlackThreadSummary({ thread }: SlackThreadSummaryProps) {
                 {thread.jira_keys.map((key) => (
                   <a
                     key={key}
-                    href={`https://hello.planet.com/jira/browse/${key}`}
+                    href={jiraUrl(key)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-block"

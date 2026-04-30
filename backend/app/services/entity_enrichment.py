@@ -22,6 +22,7 @@ from app.models import (
     LinkType,
     LinkStatus,
 )
+from app.config import settings
 from app.services.entity_link import EntityLinkService
 
 logger = logging.getLogger(__name__)
@@ -238,7 +239,7 @@ class EntityEnrichmentService:
                 DetectedReference(
                     ref_type="jira_issue",
                     ref_id=jira_key,
-                    url=f"https://hello.planet.com/jira/browse/{jira_key}",
+                    url=f"{settings.jira_base_url}/browse/{jira_key}",
                 )
             )
 

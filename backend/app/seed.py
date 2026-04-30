@@ -42,43 +42,48 @@ CANONICAL_LABELS = [
     ("follow-up", "status", "#3B82F6", "Requires follow-up"),
 ]
 
-PROJECT_LINKS = [
-    # WX
-    ("wx", "git", "wx (monorepo)", "https://hello.planet.com/code/wx/wx", "git-branch", 0),
-    ("wx", "git", "eso-golang", "https://hello.planet.com/code/wx/eso-golang", "git-branch", 1),
-    ("wx", "slack", "#wx-users", "#", "message-circle", 0),
-    ("wx", "slack", "#compute-platform", "#", "message-circle", 1),
-    ("wx", "grafana", "WX Tasks", "https://planet.grafana.net/d/wx-tasks", "bar-chart", 0),
-    ("wx", "grafana", "WX Workers", "https://planet.grafana.net/d/wx-workers", "bar-chart", 1),
-    ("wx", "jira", "WX Board", "https://hello.planet.com/jira/secure/RapidBoard.jspa", "layout", 0),
-    ("wx", "docs", "WX Architecture", "#", "file-text", 0),
-    ("wx", "docs", "WX Runbook", "#", "book", 1),
-    # G4
-    ("g4", "git", "g4 (main)", "https://hello.planet.com/code/product/g4-wk/g4", "git-branch", 0),
-    ("g4", "git", "g4-task", "https://hello.planet.com/code/product/g4-wk/g4-task", "git-branch", 1),
-    ("g4", "slack", "#g4-users", "#", "message-circle", 0),
-    ("g4", "grafana", "G4 Cluster Overview", "https://planet.grafana.net/d/g4-cluster", "bar-chart", 0),
-    ("g4", "grafana", "G4 Tasks", "https://planet.grafana.net/d/g4-tasks", "bar-chart", 1),
-    ("g4", "grafana", "G4 Pools", "https://planet.grafana.net/d/g4-pools", "bar-chart", 2),
-    ("g4", "grafana", "G4 Data Collects", "https://planet.grafana.net/d/g4-dc", "bar-chart", 3),
-    ("g4", "grafana", "G4 SLIs", "https://planet.grafana.net/d/g4-sli", "bar-chart", 4),
-    ("g4", "jira", "G4 Board", "https://hello.planet.com/jira/secure/RapidBoard.jspa", "layout", 0),
-    ("g4", "docs", "G4 Architecture", "#", "file-text", 0),
-    ("g4", "docs", "G4 Dashboards Guide", "#", "book", 1),
-    # Jobs
-    ("jobs", "git", "jobs", "https://hello.planet.com/code/jobs", "git-branch", 0),
-    ("jobs", "slack", "#jobs-users", "#", "message-circle", 0),
-    ("jobs", "grafana", "Jobs 3E", "https://planet.grafana.net/d/jobs-3e", "bar-chart", 0),
-    ("jobs", "grafana", "Jobs Alerts", "https://planet.grafana.net/d/jobs-alerts", "bar-chart", 1),
-    ("jobs", "jira", "Jobs Board", "https://hello.planet.com/jira/secure/RapidBoard.jspa", "layout", 0),
-    ("jobs", "docs", "Jobs Architecture", "#", "file-text", 0),
-    # Temporal
-    ("temporal", "git", "temporalio-cloud", "https://hello.planet.com/code/temporal/temporalio-cloud", "git-branch", 0),
-    ("temporal", "slack", "#temporal", "#", "message-circle", 0),
-    ("temporal", "grafana", "Temporal Metrics", "https://planet.grafana.net/d/temporal", "bar-chart", 0),
-    ("temporal", "jira", "Temporal Board", "https://hello.planet.com/jira/secure/RapidBoard.jspa", "layout", 0),
-    ("temporal", "docs", "Temporal Operations Guide", "#", "file-text", 0),
-]
+def _build_project_links() -> list[tuple]:
+    """Build project links using settings for base URLs."""
+    gl = settings.gitlab_base_url
+    gr = settings.grafana_base_url
+    ji = settings.jira_base_url
+    return [
+        # WX
+        ("wx", "git", "wx (monorepo)", f"{gl}/wx/wx", "git-branch", 0),
+        ("wx", "git", "eso-golang", f"{gl}/wx/eso-golang", "git-branch", 1),
+        ("wx", "slack", "#wx-users", "#", "message-circle", 0),
+        ("wx", "slack", "#compute-platform", "#", "message-circle", 1),
+        ("wx", "grafana", "WX Tasks", f"{gr}/d/wx-tasks", "bar-chart", 0),
+        ("wx", "grafana", "WX Workers", f"{gr}/d/wx-workers", "bar-chart", 1),
+        ("wx", "jira", "WX Board", f"{ji}/secure/RapidBoard.jspa", "layout", 0),
+        ("wx", "docs", "WX Architecture", "#", "file-text", 0),
+        ("wx", "docs", "WX Runbook", "#", "book", 1),
+        # G4
+        ("g4", "git", "g4 (main)", f"{gl}/product/g4-wk/g4", "git-branch", 0),
+        ("g4", "git", "g4-task", f"{gl}/product/g4-wk/g4-task", "git-branch", 1),
+        ("g4", "slack", "#g4-users", "#", "message-circle", 0),
+        ("g4", "grafana", "G4 Cluster Overview", f"{gr}/d/g4-cluster", "bar-chart", 0),
+        ("g4", "grafana", "G4 Tasks", f"{gr}/d/g4-tasks", "bar-chart", 1),
+        ("g4", "grafana", "G4 Pools", f"{gr}/d/g4-pools", "bar-chart", 2),
+        ("g4", "grafana", "G4 Data Collects", f"{gr}/d/g4-dc", "bar-chart", 3),
+        ("g4", "grafana", "G4 SLIs", f"{gr}/d/g4-sli", "bar-chart", 4),
+        ("g4", "jira", "G4 Board", f"{ji}/secure/RapidBoard.jspa", "layout", 0),
+        ("g4", "docs", "G4 Architecture", "#", "file-text", 0),
+        ("g4", "docs", "G4 Dashboards Guide", "#", "book", 1),
+        # Jobs
+        ("jobs", "git", "jobs", f"{gl}/jobs", "git-branch", 0),
+        ("jobs", "slack", "#jobs-users", "#", "message-circle", 0),
+        ("jobs", "grafana", "Jobs 3E", f"{gr}/d/jobs-3e", "bar-chart", 0),
+        ("jobs", "grafana", "Jobs Alerts", f"{gr}/d/jobs-alerts", "bar-chart", 1),
+        ("jobs", "jira", "Jobs Board", f"{ji}/secure/RapidBoard.jspa", "layout", 0),
+        ("jobs", "docs", "Jobs Architecture", "#", "file-text", 0),
+        # Temporal
+        ("temporal", "git", "temporalio-cloud", f"{gl}/temporal/temporalio-cloud", "git-branch", 0),
+        ("temporal", "slack", "#temporal", "#", "message-circle", 0),
+        ("temporal", "grafana", "Temporal Metrics", f"{gr}/d/temporal", "bar-chart", 0),
+        ("temporal", "jira", "Temporal Board", f"{ji}/secure/RapidBoard.jspa", "layout", 0),
+        ("temporal", "docs", "Temporal Operations Guide", "#", "file-text", 0),
+    ]
 
 DEFAULT_LAYOUT = {
     "layout": [
@@ -115,7 +120,7 @@ def seed():
 
         # Seed project links (clear and re-add)
         session.query(ProjectLink).delete()
-        for project, category, label_text, url, icon, sort in PROJECT_LINKS:
+        for project, category, label_text, url, icon, sort in _build_project_links():
             session.add(ProjectLink(
                 project=project,
                 category=category,

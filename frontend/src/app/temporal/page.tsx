@@ -22,6 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ProjectAgents } from "@/components/agents/ProjectAgents";
 import { usePoll } from "@/lib/polling";
+import { gitlabUrl, slackChannelUrl, grafanaUrl } from "@/lib/urls";
 import { api, TemporalKeyHealth, TemporalUnanswered, TemporalMRsResponse } from "@/lib/api";
 
 import { NeedsAttentionBanner } from "@/components/temporal/NeedsAttentionBanner";
@@ -45,16 +46,16 @@ const ICON_MAP: Record<string, ReactNode> = {
 
 const LINKS: Record<string, Array<{ label: string; url: string; icon: string }>> = {
   git: [
-    { label: "temporalio-cloud", url: "https://hello.planet.com/code/temporal/temporalio-cloud", icon: "git-branch" },
+    { label: "temporalio-cloud", url: gitlabUrl("temporal/temporalio-cloud"), icon: "git-branch" },
   ],
   slack: [
-    { label: "#temporal-users", url: "https://planetlabs.slack.com/channels/temporal-users", icon: "message-circle" },
-    { label: "#temporal-dev", url: "https://planetlabs.slack.com/channels/temporal-dev", icon: "message-circle" },
+    { label: "#temporal-users", url: slackChannelUrl("temporal-users"), icon: "message-circle" },
+    { label: "#temporal-dev", url: slackChannelUrl("temporal-dev"), icon: "message-circle" },
   ],
   grafana: [
-    { label: "Platform Health", url: "https://planet.grafana.net/d/77b0bb16-2f51-4ecb-bf9d-06be203a6725", icon: "bar-chart" },
-    { label: "Platform Ops", url: "https://planet.grafana.net/d/temporal-platform-ops-v1", icon: "bar-chart" },
-    { label: "Tenant Health", url: "https://planet.grafana.net/d/temporal-tenant-health-v1", icon: "bar-chart" },
+    { label: "Platform Health", url: grafanaUrl("d/77b0bb16-2f51-4ecb-bf9d-06be203a6725"), icon: "bar-chart" },
+    { label: "Platform Ops", url: grafanaUrl("d/temporal-platform-ops-v1"), icon: "bar-chart" },
+    { label: "Tenant Health", url: grafanaUrl("d/temporal-tenant-health-v1"), icon: "bar-chart" },
   ],
   docs: [
     { label: "Admin Guide", url: "#", icon: "file-text" },

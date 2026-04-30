@@ -6,6 +6,7 @@ from pathlib import Path
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
+from app.config import settings
 from app.models.agent import Agent
 from app.models.work_context import WorkContext
 from app.models.entity_link import EntityLink, LinkStatus
@@ -232,7 +233,7 @@ class PRAutomationService:
 
                 # Try to extract URL and IID from output
                 for line in output.split("\n"):
-                    if "hello.planet.com" in line:
+                    if settings.gitlab_base_url and settings.gitlab_base_url in line:
                         url_match = line.strip()
                     if "!" in line and line.strip().startswith("!"):
                         try:

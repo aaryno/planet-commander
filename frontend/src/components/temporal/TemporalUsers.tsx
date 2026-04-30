@@ -6,6 +6,7 @@ import { ScrollableCard } from "@/components/ui/scrollable-card";
 import { usePoll } from "@/lib/polling";
 import { api, TemporalTenantsResponse, TemporalTenant } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
+import { slackTeamUrl, slackChannelUrl, gitlabUrl } from "@/lib/urls";
 
 interface UserInfo {
   email: string;
@@ -53,7 +54,7 @@ function UserModal({ user, onClose }: { user: UserInfo; onClose: () => void }) {
             <div className="flex items-center gap-2 text-xs">
               <MessageCircle className="h-3 w-3 text-zinc-500 shrink-0" />
               <a
-                href={`https://planetlabs.slack.com/team/${user.email.split("@")[0]}`}
+                href={slackTeamUrl(user.email.split("@")[0])}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-zinc-300 hover:text-emerald-400"
@@ -135,7 +136,7 @@ function TeamCard({ tenant }: { tenant: TemporalTenant }) {
               {tenant.slack_channels.map((ch) => (
                 <a
                   key={ch}
-                  href={`https://planet-labs.slack.com/channels/${ch}`}
+                  href={slackChannelUrl(ch)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-zinc-400 hover:text-emerald-400"
@@ -157,7 +158,7 @@ function TeamCard({ tenant }: { tenant: TemporalTenant }) {
               {tenant.repos.map((repo) => (
                 <a
                   key={repo}
-                  href={`https://hello.planet.com/code/${repo}`}
+                  href={gitlabUrl(repo)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-zinc-400 hover:text-emerald-400 font-mono"

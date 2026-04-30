@@ -5,6 +5,7 @@ import { api, ServiceHealthResponse, ServiceDetailResponse, IncidentDetail, Team
 import { usePoll } from "@/lib/polling";
 import { cn } from "@/lib/utils";
 import { RefreshCw, AlertTriangle, ExternalLink, ChevronDown, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Search, X, Clock, User, Siren } from "lucide-react";
+import { jiraUrl } from "@/lib/urls";
 
 const COL = {
   service: "w-[40%]",
@@ -311,7 +312,7 @@ function ServiceHealthTable({
                     <td className="py-1.5 px-3">
                       {svc.prodissue ? (
                         <a
-                          href={`https://hello.planet.com/jira/browse/${svc.prodissue}`}
+                          href={jiraUrl(svc.prodissue)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center gap-1 text-xs text-red-400 hover:text-red-300"
@@ -412,7 +413,7 @@ function SlackThreadDetail({ urls }: { urls: string[] }) {
               <div className="flex flex-wrap gap-1">
                 <span className="text-zinc-500 text-[10px]">In thread:</span>
                 {a.jira_keys.map((k: string) => (
-                  <a key={k} href={`https://hello.planet.com/jira/browse/${k}`} target="_blank" rel="noopener noreferrer"
+                  <a key={k} href={jiraUrl(k)} target="_blank" rel="noopener noreferrer"
                     className="text-blue-400 hover:text-blue-300 text-[10px]">{k}</a>
                 ))}
               </div>
@@ -633,7 +634,7 @@ function ServiceDetailModal({
                             <div className="flex flex-wrap items-center gap-2 mt-1.5">
                               {(inc as any).prodissue_key && (
                                 <a
-                                  href={`https://hello.planet.com/jira/browse/${(inc as any).prodissue_key}`}
+                                  href={jiraUrl((inc as any).prodissue_key)}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="inline-flex items-center gap-1 text-[11px] text-red-400 hover:text-red-300 bg-red-500/10 rounded px-1.5 py-0.5"
@@ -646,7 +647,7 @@ function ServiceDetailModal({
                               {((inc as any).jira_keys || []).map((key: string) => (
                                 <a
                                   key={key}
-                                  href={`https://hello.planet.com/jira/browse/${key}`}
+                                  href={jiraUrl(key)}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="inline-flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 bg-blue-500/10 rounded px-1.5 py-0.5"
@@ -812,7 +813,7 @@ function ProdissueList({ prodissues }: { prodissues: Array<{ key: string; title:
                 <tr key={p.key} className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors">
                   <td className="py-1.5 px-3 whitespace-nowrap">
                     <a
-                      href={`https://hello.planet.com/jira/browse/${p.key}`}
+                      href={jiraUrl(p.key)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs font-mono text-red-400 hover:text-red-300 inline-flex items-center gap-1"

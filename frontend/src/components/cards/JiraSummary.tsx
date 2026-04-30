@@ -10,6 +10,7 @@ import { usePoll } from "@/lib/polling";
 import { api, JiraSummaryResponse, JiraTicketEnhanced } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { useUrlParam, useUrlArrayParam } from "@/lib/use-url-state";
+import { useUserConfig } from "@/lib/user-config";
 
 type AssigneeFilter = "all" | "me" | string; // "all", "me", or team key
 
@@ -81,6 +82,7 @@ type SortField = "key" | "summary" | "status" | "assignee" | "age";
 type SortDirection = "asc" | "desc";
 
 export function JiraSummary({ hideProjectFilter = false, onTicketClick, urlPrefix = "jira", jiraProjectKeys, labelFilters: customLabelFilters }: JiraSummaryProps) {
+  const userConfig = useUserConfig();
   const p = urlPrefix ? `${urlPrefix}.` : "";
   const defaultKeys = jiraProjectKeys && jiraProjectKeys.length > 0 ? jiraProjectKeys : ["COMPUTE"];
   const [assigneeFilter, setAssigneeFilter] = useUrlParam(`${p}assignee`, "all") as [AssigneeFilter, (v: string) => void];
@@ -268,7 +270,7 @@ export function JiraSummary({ hideProjectFilter = false, onTicketClick, urlPrefi
     }
     // Assignee filter
     if (assigneeFilter === "all") return true;
-    if (assigneeFilter === "me") return ticket.assignee === "Aaryn Olsson";
+    if (assigneeFilter === "me") return ticket.assignee === userConfig.display_name;
     // Team filter
     const team = TEAMS[assigneeFilter];
     if (team) return team.members.includes(ticket.assignee);

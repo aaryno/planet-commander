@@ -12,6 +12,7 @@ import { AgentBadge } from "@/components/shared/AgentBadge";
 import { ExternalLinks } from "@/components/shared/ExternalLinks";
 import { Badge } from "@/components/ui/badge";
 import { extractJiraKey } from "@/lib/utils";
+import { jiraUrl, gitlabMrUrl } from "@/lib/urls";
 
 interface MRExpandedProps {
   project: string;
@@ -114,7 +115,7 @@ export function MRExpanded({ project, iid, title, onOpenAgent }: MRExpandedProps
   if (!mrDetail) return null;
 
   const gitlabProjectPath = getGitlabProjectPath(project);
-  const mrUrl = mrDetail.url || `https://hello.planet.com/code/${gitlabProjectPath}/-/merge_requests/${iid}`;
+  const mrUrl = mrDetail.url || gitlabMrUrl(gitlabProjectPath, iid);
 
   const externalLinks = [
     { label: "GitLab", url: mrUrl },
@@ -193,7 +194,7 @@ export function MRExpanded({ project, iid, title, onOpenAgent }: MRExpandedProps
                 className="text-cyan-400 border-cyan-600/50 bg-cyan-500/10 text-[10px] px-1.5 py-0.5 font-mono hover:bg-cyan-500/20 transition-colors"
               >
                 <a
-                  href={`https://hello.planet.com/jira/browse/${jiraKey}`}
+                  href={jiraUrl(jiraKey!)}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}

@@ -17,6 +17,7 @@ import { addAgentToAMV } from "@/lib/amv";
 import { parseTitle } from "@/lib/parse-title";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Bot, Ticket } from "lucide-react";
+import { jiraUrl } from "@/lib/urls";
 import { useCart } from "@/lib/cart";
 import { useToast } from "@/components/ui/toast-simple";
 import { RepoProvider, resolveGitLabProject } from "@/lib/repo-context";
@@ -538,7 +539,7 @@ export function ChatView({ agent, headerActions, className = "", onHide, hideAMV
                   {fallback.jiraKey && (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <a href={`https://hello.planet.com/jira/browse/${fallback.jiraKey}`} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                        <a href={jiraUrl(fallback.jiraKey!)} target="_blank" rel="noopener noreferrer" className="shrink-0">
                           <Badge variant="outline" className="text-[9px] px-1 py-0 border-amber-700/50 bg-amber-500/5 text-amber-500 cursor-pointer hover:bg-amber-500/10">
                             <Ticket className="h-2.5 w-2.5 mr-0.5" />{fallback.jiraKey}
                           </Badge>

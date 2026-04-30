@@ -5,7 +5,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from app.api import agents, artifacts, audits, automation, coach, contexts, docs, enrich, fs, gitlab, gitlab_mrs, google_drive, grafana, grafana_alerts, health, infra, investigations, jira, jobs, labels, layout, links, pagerduty, permissions, processes, project_docs, projects, service_health, skills, slack, slack_threads, summaries, sync, temporal, terminal, urls, warnings, workspaces, worktrees, wx
+from app.api import agents, artifacts, audits, automation, coach, config_api, contexts, docs, enrich, fs, gitlab, gitlab_mrs, google_drive, grafana, grafana_alerts, health, infra, investigations, jira, jobs, labels, layout, links, pagerduty, pcg, permissions, processes, project_docs, projects, service_health, skills, slack, slack_threads, summaries, sync, temporal, terminal, urls, warnings, workspaces, worktrees, wx
 from app.services.sync_scheduler import scheduler
 from app.services.process_manager import process_manager
 from app.services.background_jobs import job_service
@@ -291,6 +291,7 @@ app.include_router(google_drive.router, prefix="/api")  # Router has /google-dri
 app.include_router(docs.router, prefix="/api/docs", tags=["docs"])
 app.include_router(jobs.router, prefix="/api")
 app.include_router(projects.router)  # Router has /api/projects prefix
+app.include_router(config_api.router)  # Router has /api/config prefix
 app.include_router(processes.router, prefix="/api/processes", tags=["processes"])
 app.include_router(skills.router)  # Router has /api/skills prefix
 app.include_router(temporal.router, prefix="/api/temporal", tags=["temporal"])
@@ -303,6 +304,7 @@ app.include_router(sync.router)  # Router has /api/sync prefix
 app.include_router(worktrees.router, prefix="/api/worktrees", tags=["worktrees"])
 app.include_router(wx.router, prefix="/api/wx", tags=["wx"])
 app.include_router(infra.router)  # Router has /api/infra prefix
+app.include_router(pcg.router)  # Router has /api/pcg prefix
 
 
 @app.get("/api/health")

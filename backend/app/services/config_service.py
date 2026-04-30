@@ -22,32 +22,24 @@ class ConfigService:
         return self._config or {}
 
     def _get_default_config(self) -> Dict[str, Any]:
-        """Return default configuration."""
+        """Return default configuration.
+
+        Repo list is intentionally empty — repos come from the projects
+        table via ProjectConfigService. Add repo overrides in
+        ~/.config/planet-commander/config.yaml if needed.
+        """
         return {
             "background_jobs": {
                 "enabled": True,
                 "git_scanner": {
                     "enabled": True,
                     "schedule_minutes": 30,
-                    "repositories": [
-                        {"path": str(Path.home() / "code/wx/wx"), "name": "wx"},
-                        {"path": str(Path.home() / "code/product/g4-wk/g4"), "name": "g4"},
-                        {"path": str(Path.home() / "code/jobs/jobs"), "name": "jobs"},
-                        {
-                            "path": str(Path.home() / "workspaces/temporalio/temporalio-cloud"),
-                            "name": "temporal",
-                        },
-                    ],
+                    "repositories": [],
                 },
                 "jira_sync": {
                     "enabled": True,
                     "schedule_minutes": 15,
                     "queries": [
-                        {
-                            "name": "active_compute",
-                            "jql": 'project = COMPUTE AND status IN ("In Progress", "In Review", "Ready to Deploy", "Monitoring")',
-                            "max_results": 100,
-                        },
                         {
                             "name": "my_assigned",
                             "jql": "assignee = currentUser() AND resolution = Unresolved",
@@ -108,6 +100,16 @@ class ConfigService:
             .get("link_inference", {})
             .get("min_confidence", 0.7)
         )
+
+
+async def get_repos_to_scan_from_db(db) -> list[dict]:
+    """Get repos to scan from the projects database.
+
+    Returns repo configs with resolved local paths for all active projects.
+    Only includes repos that exist on disk at ~/code/{gitlab_path}.
+    """
+    from app.services.project_config import ProjectConfigService
+    return await ProjectConfigService(db).get_repo_scan_config()
 
 
 # Singleton instance

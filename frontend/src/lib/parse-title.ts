@@ -1,3 +1,5 @@
+import { gitlabMrUrl } from "@/lib/urls";
+
 export interface TitleParts {
   cleanTitle: string;
   hasCommander: boolean;
@@ -64,7 +66,7 @@ export function parseTitle(raw: string): TitleParts {
   }
 
   if (mrRepo && mrNumber) {
-    mrUrl = `https://hello.planet.com/code/${mrRepo}/-/merge_requests/${mrNumber}`;
+    mrUrl = gitlabMrUrl(mrRepo, parseInt(mrNumber, 10));
   }
 
   text = text.replace(/\s+/g, " ").trim();

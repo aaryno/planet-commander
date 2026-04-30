@@ -152,8 +152,15 @@ def _parse_unindexed_session(jsonl_path: Path, project_dir_name: str) -> Session
     )
 
 
-def map_project(project_dir_name: str) -> str:
-    """Map a Claude project directory name to a project key."""
+def map_project(project_dir_name: str, path_map: dict[str, str] | None = None) -> str:
+    """Map a Claude project directory name to a project key.
+
+    Args:
+        project_dir_name: The hyphenated dir name (e.g. "-Users-aaryn-code-wx-wx")
+        path_map: Optional DB-derived map. Falls back to settings.project_path_map.
+    """
+    if path_map and project_dir_name in path_map:
+        return path_map[project_dir_name]
     return settings.project_path_map.get(project_dir_name, "general")
 
 
@@ -228,7 +235,11 @@ def extract_mr_references(session: SessionEntry) -> list[dict]:
 
     import json, re
     mrs: dict[str, dict] = {}
-    mr_pattern = re.compile(r'(?:https://hello\.planet\.com/code/([\w/-]+)/-/merge_requests/(\d+))|(?:!(\d+))')
+    gitlab_base = settings.gitlab_base_url
+    if not gitlab_base:
+        return mrs
+    escaped_base = re.escape(gitlab_base)
+    mr_pattern = re.compile(rf'(?:{escaped_base}/([\w/-]+)/-/merge_requests/(\d+))|(?:!(\d+))')
 
     try:
         with open(jsonl_path, "r", errors="replace") as f:
@@ -243,7 +254,7 @@ def extract_mr_references(session: SessionEntry) -> list[dict]:
                         mrs[key] = {
                             "repo": repo,
                             "iid": int(mr_num_url),
-                            "url": f"https://hello.planet.com/code/{repo}/-/merge_requests/{mr_num_url}",
+                            "url": f"{gitlab_base}/{repo}/-/merge_requests/{mr_num_url}",
                         }
     except Exception:
         pass

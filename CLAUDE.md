@@ -59,13 +59,6 @@ docker-compose up postgres          # Database: localhost:9432
 
 **Future State (Planet Commander)**: Work context as primary abstraction, linking issues, chats, branches, worktrees, PRs, summaries, and audits into coherent operational contexts.
 
-### Implementation Artifacts
-
-📋 **Planning Documents** (in `~/claude/artifacts/`):
-- [Gap Analysis](../artifacts/20260317-1800-planet-commander-gap-analysis.md) - Current vs. proposed state, effort estimates
-- [Phase 1 Implementation Plan](../artifacts/20260317-1805-phase1-implementation-plan.md) - Detailed technical design for context foundation
-- [Phase 1 Quick Start Guide](../artifacts/20260317-1810-phase1-quickstart-guide.md) - Step-by-step development workflow
-
 ### Phase 1 Goals (Weeks 1-4)
 
 **Deliverable**: Users can open any entity (JIRA ticket, chat, branch, worktree) and see a coherent linked context
@@ -99,10 +92,7 @@ docker-compose up postgres          # Database: localhost:9432
 
 ### For Developers
 
-If you're implementing Phase 1:
-1. Read the [Quick Start Guide](../artifacts/20260317-1810-phase1-quickstart-guide.md)
-2. Follow the [Phase 1 Implementation Plan](../artifacts/20260317-1805-phase1-implementation-plan.md)
-3. Continue following the development rules below for all new code
+Follow the development rules below for all new code.
 
 ---
 
@@ -173,7 +163,7 @@ export function ScrollableCard({ title, children, ... }) { ... }
 <ScrollableCard title="Deployments">{content}</ScrollableCard>
 ```
 
-**Recent Example**: See [SCROLLABLE-CARD-COMPONENT.md](./SCROLLABLE-CARD-COMPONENT.md)
+**Recent Example**: See `ScrollableCard` in `frontend/src/components/ui/scrollable-card.tsx`
 
 ### **RULE #3: Make Components Configurable, Not Specialized**
 
@@ -241,7 +231,7 @@ Commander uses an **EntityLink-based architecture** to connect work contexts wit
 
 **Key Principle**: Build infrastructure once (models, background jobs, UI cards), then wire into work contexts with minimal code.
 
-**Proven Success**: 4 integrations completed in 2h 10min (average ~30 min each) - See [Phase 2 Summary](../artifacts/20260320-1930-phase2-integrations-summary.md)
+**Proven Success**: 4 integrations completed in 2h 10min (average ~30 min each).
 
 ### Prerequisites
 
@@ -511,13 +501,11 @@ After integration, you should see:
 
 ### Example Integrations
 
-Study these for reference:
-- [PagerDuty Incidents](../artifacts/20260320-1730-pagerduty-context-integration-complete.md) - Pattern A (JIRA → incident)
-- [Grafana Alerts](../artifacts/20260320-1800-grafana-alerts-context-integration-complete.md) - Pattern B (alert → JIRA) + Bug fix
-- [Artifacts](../artifacts/20260320-1830-artifact-indexing-context-integration-complete.md) - Pattern A (JIRA → artifact)
-- [GitLab MRs](../artifacts/20260320-1900-gitlab-mrs-context-integration-complete.md) - Pattern A (JIRA → MR)
-
-**Full Pattern Analysis**: [Phase 2 Summary](../artifacts/20260320-1930-phase2-integrations-summary.md)
+Study the existing integrations in the codebase for reference:
+- **PagerDuty Incidents** — Pattern A (JIRA → incident): `context_resolver.py`
+- **Grafana Alerts** — Pattern B (alert → JIRA): `context_resolver.py`
+- **Artifacts** — Pattern A (JIRA → artifact): `context_resolver.py`
+- **GitLab MRs** — Pattern A (JIRA → MR): `context_resolver.py`
 
 ---
 
@@ -723,12 +711,8 @@ export function MyNewCard() {
 
 ### Implementation Guides
 
-Recent features with detailed documentation:
-
-- [SCROLLABLE-CARD-COMPONENT.md](./SCROLLABLE-CARD-COMPONENT.md) - Shared scrollable card pattern
-- [WX-DEPLOYMENTS-IMPLEMENTATION.md](./WX-DEPLOYMENTS-IMPLEMENTATION.md) - Real-time K8s integration
-- [JIRA-SUMMARY-IMPLEMENTATION.md](./JIRA-SUMMARY-IMPLEMENTATION.md) - JIRA filters and sticky headers
-- [SLACK-SSE-IMPLEMENTATION.md](./SLACK-SSE-IMPLEMENTATION.md) - Server-sent events
+Implementation docs are kept in your personal project notes directory
+(not committed to the repo). See existing feature code for patterns.
 
 ### Tech Stack
 

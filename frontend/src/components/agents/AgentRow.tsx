@@ -23,6 +23,7 @@ import { useCart } from "@/lib/cart";
 import { JIRA_STATUS_COLORS } from "@/lib/status-colors";
 import { parseTitle } from "@/lib/parse-title";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { jiraUrl } from "@/lib/urls";
 
 function MRBadges({ mrs }: { mrs: Array<{ repo: string; iid: number; url: string }> }) {
   const [enriched, setEnriched] = useState<Record<string, import("@/lib/api").EnrichedMR>>({});
@@ -307,7 +308,7 @@ export function AgentRow({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <a
-                    href={`https://hello.planet.com/jira/browse/${titleParts.jiraKey}`}
+                    href={jiraUrl(titleParts.jiraKey!)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="shrink-0"
@@ -548,7 +549,7 @@ export function AgentRow({
         )}
         {agent.jira_key && (
           <a
-            href={`https://hello.planet.com/jira/browse/${agent.jira_key}`}
+            href={jiraUrl(agent.jira_key!)}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1"

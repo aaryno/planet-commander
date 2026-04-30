@@ -6,7 +6,7 @@ from pathlib import Path
 from app.database import async_session
 from app.services.branch_tracking import BranchTrackingService
 from app.services.worktree_tracking import WorktreeTrackingService
-from app.services.config_service import config
+from app.services.config_service import config, get_repos_to_scan_from_db
 
 logger = logging.getLogger(__name__)
 
@@ -23,9 +23,14 @@ async def scan_git_repositories():
     total_branches = 0
     total_worktrees = 0
     repos_scanned = 0
-    repos_to_scan = config.get_repos_to_scan()
 
     async with async_session() as db:
+        try:
+            db_repos = await get_repos_to_scan_from_db(db)
+            repos_to_scan = [r["path"] for r in db_repos if r.get("path")]
+        except Exception as e:
+            logger.warning("Failed to load repos from DB, falling back to config: %s", e)
+            repos_to_scan = config.get_repos_to_scan()
         try:
             branch_service = BranchTrackingService(db)
             worktree_service = WorktreeTrackingService(db)

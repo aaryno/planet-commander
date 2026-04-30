@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { api } from "@/lib/api";
 import { getLabelColor } from "@/lib/label-colors";
+import { jiraUrl } from "@/lib/urls";
 
 interface ChatCardProps {
   agent: Agent;
@@ -57,7 +58,7 @@ export function ChatCard({ agent, onClose, onHide }: ChatCardProps) {
 
               {/* External link */}
               <a
-                href={`https://hello.planet.com/jira/browse/${localAgent.jira_key}`}
+                href={jiraUrl(localAgent.jira_key!)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-zinc-500 hover:text-zinc-300 transition-colors"

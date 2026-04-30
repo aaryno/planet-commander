@@ -16,36 +16,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.models.mr_review import MRReview
+from app.services.project_config import ProjectConfigService
 
 logger = logging.getLogger(__name__)
 
 # Simple in-memory cache for MR lists
 _mrs_cache: dict[str, tuple[list[dict], datetime]] = {}
 _CACHE_TTL = timedelta(seconds=30)
-
-# Project configurations
-PROJECTS = {
-    "wx": {
-        "repo": "wx/wx",
-        "web_url": "https://hello.planet.com/code/wx/wx",
-        "worktree_base": "~/workspaces",
-    },
-    "jobs": {
-        "repo": "jobs/jobs",
-        "web_url": "https://hello.planet.com/code/jobs/jobs",
-        "worktree_base": "~/workspaces",
-    },
-    "g4": {
-        "repo": "product/g4-wk/g4",
-        "web_url": "https://hello.planet.com/code/product/g4-wk/g4",
-        "worktree_base": "~/code/product/g4-wk",
-    },
-    "temporal": {
-        "repo": "temporal/temporalio-cloud",
-        "web_url": "https://hello.planet.com/code/temporal/temporalio-cloud",
-        "worktree_base": "~/workspaces/temporalio",
-    },
-}
 
 GLAB_DIR = Path.home() / "tools" / "glab"
 GLAB_MR = str(GLAB_DIR / "glab-mr")
@@ -113,43 +90,50 @@ def _parse_mr_list(output: str, repo: str, web_url: str) -> list[dict]:
     return mrs
 
 
-async def list_open_mrs(projects: list[str] | None = None) -> dict[str, Any]:
+async def list_open_mrs(
+    db: AsyncSession,
+    projects: list[str] | None = None,
+) -> dict[str, Any]:
     """List open MRs across selected projects.
 
     Args:
-        projects: List of project keys (wx, jobs, g4, temporal). If None, fetch all.
+        db: Database session for project config and review state lookups.
+        projects: List of project keys. If None, fetch all active projects.
 
     Returns:
         Dict with mrs: [{project, iid, title, author, age_created, age_last_commit, url, is_draft, is_mine}, ...]
     """
+    project_configs = await ProjectConfigService(db).get_gitlab_projects()
+
     if projects is None:
-        projects = list(PROJECTS.keys())
+        projects = list(project_configs.keys())
 
     # Fetch MRs from all projects in parallel
     tasks = []
+    valid_projects = []
     for project_key in projects:
-        if project_key not in PROJECTS:
+        config = project_configs.get(project_key)
+        if not config:
             continue
-        tasks.append(_fetch_project_mrs(project_key))
+        valid_projects.append(project_key)
+        tasks.append(_fetch_project_mrs(project_key, config))
 
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
     # Combine results
     all_mrs = []
-    for project_key, result in zip(projects, results):
+    for project_key, result in zip(valid_projects, results):
         if isinstance(result, Exception):
             logger.error(f"Failed to fetch MRs for {project_key}: {result}")
             continue
         all_mrs.extend(result)
 
     # Fetch review state for all MRs
-    async for session in get_db():
-        review_states = await _get_review_states(session, all_mrs)
-        for mr in all_mrs:
-            key = f"{mr['project']}:{mr['iid']}"
-            mr['needs_review'] = review_states.get(key, {}).get('needs_review', True)
-            mr['reviews'] = review_states.get(key, {}).get('reviews', [])
-        break  # Only need one session
+    review_states = await _get_review_states(db, all_mrs)
+    for mr in all_mrs:
+        key = f"{mr['project']}:{mr['iid']}"
+        mr['needs_review'] = review_states.get(key, {}).get('needs_review', True)
+        mr['reviews'] = review_states.get(key, {}).get('reviews', [])
 
     return {
         "mrs": all_mrs,
@@ -158,7 +142,7 @@ async def list_open_mrs(projects: list[str] | None = None) -> dict[str, Any]:
     }
 
 
-async def _fetch_project_mrs(project_key: str) -> list[dict]:
+async def _fetch_project_mrs(project_key: str, config: dict) -> list[dict]:
     """Fetch MRs for a single project with detailed information."""
     # Check cache first
     now = datetime.utcnow()
@@ -168,7 +152,6 @@ async def _fetch_project_mrs(project_key: str) -> list[dict]:
             logger.debug(f"Using cached MRs for {project_key} (age: {(now - cached_at).seconds}s)")
             return cached_mrs
 
-    config = PROJECTS[project_key]
     repo = config["repo"]
     web_url = config["web_url"]
 
@@ -180,7 +163,7 @@ async def _fetch_project_mrs(project_key: str) -> list[dict]:
     basic_mrs = _parse_mr_list(output, repo, web_url)
 
     # Fetch detailed info for each MR in parallel
-    tasks = [_fetch_mr_details(project_key, mr["iid"]) for mr in basic_mrs]
+    tasks = [_fetch_mr_details(project_key, mr["iid"], repo) for mr in basic_mrs]
     detailed_results = await asyncio.gather(*tasks, return_exceptions=True)
 
     mrs = []
@@ -208,11 +191,8 @@ async def _fetch_project_mrs(project_key: str) -> list[dict]:
     return mrs
 
 
-async def _fetch_mr_details(project: str, mr_iid: int) -> dict:
-    """Fetch detailed MR information using glab mr view."""
-    config = PROJECTS[project]
-    repo = config["repo"]
-
+async def _fetch_mr_details(project: str, mr_iid: int, repo: str) -> dict:
+    """Fetch detailed MR information using glab API."""
     # Use glab API to get MR details
     output = await _run_cmd(["glab", "api", f"projects/{repo.replace('/', '%2F')}/merge_requests/{mr_iid}"])
     if output is None:
@@ -278,9 +258,14 @@ async def _fetch_mr_details(project: str, mr_iid: int) -> dict:
         }
 
 
-async def get_mr_pipelines(project: str, mr_iid: int) -> dict:
+async def get_mr_pipelines(
+    db: AsyncSession,
+    project: str,
+    mr_iid: int,
+) -> dict:
     """Fetch all pipelines for an MR, with jobs for the most recent one."""
-    config = PROJECTS.get(project)
+    project_configs = await ProjectConfigService(db).get_gitlab_projects()
+    config = project_configs.get(project)
     if not config:
         return {"pipelines": [], "error": f"Unknown project: {project}"}
 
@@ -381,23 +366,28 @@ async def get_mr_pipelines(project: str, mr_iid: int) -> dict:
     }
 
 
-async def get_mr_details(project: str, mr_iid: int) -> dict:
+async def get_mr_details(db: AsyncSession, project: str, mr_iid: int) -> dict:
     """Get detailed information for a specific MR."""
-    details = await _fetch_mr_details(project, mr_iid)
+    project_configs = await ProjectConfigService(db).get_gitlab_projects()
+    config = project_configs.get(project, {})
+    repo = config.get("repo", project)
+
+    details = await _fetch_mr_details(project, mr_iid, repo)
 
     # Get review state
-    async for session in get_db():
-        review_state = await _get_mr_review_state(session, project, mr_iid)
-        details['needs_review'] = review_state.get('needs_review', True)
-        details['reviews'] = review_state.get('reviews', [])
-        break
+    review_state = await _get_mr_review_state(db, project, mr_iid)
+    details['needs_review'] = review_state.get('needs_review', True)
+    details['reviews'] = review_state.get('reviews', [])
 
     return details
 
 
-async def approve_mr(project: str, mr_iid: int) -> dict:
+async def approve_mr(db: AsyncSession, project: str, mr_iid: int) -> dict:
     """Approve an MR using glab."""
-    config = PROJECTS[project]
+    project_configs = await ProjectConfigService(db).get_gitlab_projects()
+    config = project_configs.get(project)
+    if not config:
+        return {"success": False, "error": f"Unknown project: {project}"}
     repo = config["repo"]
 
     output = await _run_cmd(["glab", "mr", "approve", str(mr_iid), "-R", repo])
@@ -407,9 +397,12 @@ async def approve_mr(project: str, mr_iid: int) -> dict:
     return {"success": True, "message": "MR approved"}
 
 
-async def close_mr(project: str, mr_iid: int) -> dict:
+async def close_mr(db: AsyncSession, project: str, mr_iid: int) -> dict:
     """Close an MR using glab."""
-    config = PROJECTS[project]
+    project_configs = await ProjectConfigService(db).get_gitlab_projects()
+    config = project_configs.get(project)
+    if not config:
+        return {"success": False, "error": f"Unknown project: {project}"}
     repo = config["repo"]
 
     output = await _run_cmd(["glab", "mr", "close", str(mr_iid), "-R", repo])
@@ -419,13 +412,14 @@ async def close_mr(project: str, mr_iid: int) -> dict:
     return {"success": True, "message": "MR closed"}
 
 
-async def toggle_draft(project: str, mr_iid: int, is_draft: bool) -> dict:
+async def toggle_draft(db: AsyncSession, project: str, mr_iid: int, is_draft: bool) -> dict:
     """Toggle draft status on an MR."""
-    config = PROJECTS[project]
+    project_configs = await ProjectConfigService(db).get_gitlab_projects()
+    config = project_configs.get(project)
+    if not config:
+        return {"success": False, "error": f"Unknown project: {project}"}
     repo = config["repo"]
 
-    # Use GitLab API to toggle draft
-    action = "draft" if is_draft else "ready"
     output = await _run_cmd([
         "glab", "api", "-X", "PUT",
         f"projects/{repo.replace('/', '%2F')}/merge_requests/{mr_iid}",
@@ -438,7 +432,12 @@ async def toggle_draft(project: str, mr_iid: int, is_draft: bool) -> dict:
     return {"success": True, "is_draft": is_draft}
 
 
-async def trigger_review(project: str, mr_iid: int, agent_api_url: str = "http://localhost:9000/api") -> dict:
+async def trigger_review(
+    db: AsyncSession,
+    project: str,
+    mr_iid: int,
+    agent_api_url: str = "http://localhost:9000/api",
+) -> dict:
     """Trigger an MR review: spawn agent + run audit persona pipeline.
 
     Orchestrates:
@@ -450,11 +449,9 @@ async def trigger_review(project: str, mr_iid: int, agent_api_url: str = "http:/
     from app.services.review_orchestrator import orchestrate_review
 
     try:
-        async for db_session in get_db():
-            result = await orchestrate_review(
-                db_session, project, mr_iid, agent_api_url
-            )
-            break
+        result = await orchestrate_review(
+            db, project, mr_iid, agent_api_url
+        )
 
         if result.error:
             return {"success": False, "error": result.error}

@@ -6,42 +6,44 @@ import string
 import subprocess
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.services.worktree_service import REPO_ROOTS, discover_worktrees
+from app.database import get_db
+from app.services.project_config import ProjectConfigService
+from app.services.worktree_service import discover_worktrees
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# Map project key to the repo root used for worktree creation
-PROJECT_REPO_MAP: dict[str, str] = {
-    "wx": "wx-1/wx",
-    "jobs": "jobs/jobs",
-    "temporal": "temporalio/temporalio-cloud",
-}
-
 
 @router.get("")
-async def list_worktrees(project: str | None = Query(None)):
+async def list_worktrees(
+    project: str | None = Query(None),
+    db: AsyncSession = Depends(get_db),
+):
     """List all git worktrees across known repos.
 
     Optionally filter by project (matches repo root).
     """
-    worktrees = discover_worktrees()
+    svc = ProjectConfigService(db)
+    repo_roots = await svc.get_worktree_roots()
+    worktrees = discover_worktrees(repo_roots)
 
     # Filter out bare repos
     worktrees = [w for w in worktrees if not w.is_bare]
 
     if project:
-        repo_root = PROJECT_REPO_MAP.get(project)
-        if repo_root:
+        worktree_map = await svc.get_worktree_map()
+        repo_path = worktree_map.get(project, "")
+        if repo_path:
+            repo_name = Path(repo_path).name
             worktrees = [
-                w
-                for w in worktrees
-                if repo_root.split("/")[0] in w.path
+                w for w in worktrees
+                if repo_name in w.path
             ]
 
     return {
@@ -128,7 +130,10 @@ async def _checkout_existing_branch(repo_path: Path, branch: str) -> dict:
 
 
 @router.post("")
-async def create_worktree(request: CreateWorktreeRequest):
+async def create_worktree(
+    request: CreateWorktreeRequest,
+    db: AsyncSession = Depends(get_db),
+):
     """Create a new git worktree for a project.
 
     If jira_key is provided, uses it in the branch name (ao/COMPUTE-1234).
@@ -137,14 +142,15 @@ async def create_worktree(request: CreateWorktreeRequest):
 
     Returns the worktree path and branch name.
     """
-    repo_root = PROJECT_REPO_MAP.get(request.project)
-    if not repo_root:
+    worktree_map = await ProjectConfigService(db).get_worktree_map()
+    repo_path_str = worktree_map.get(request.project)
+    if not repo_path_str:
         raise HTTPException(
             status_code=400,
-            detail=f"Unknown project '{request.project}'. Known: {list(PROJECT_REPO_MAP.keys())}",
+            detail=f"Unknown project '{request.project}'. Known: {list(worktree_map.keys())}",
         )
 
-    repo_path = settings.workspaces_dir / repo_root
+    repo_path = Path(repo_path_str)
     if not repo_path.exists():
         raise HTTPException(
             status_code=400,
