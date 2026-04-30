@@ -18,7 +18,6 @@ import {
   Server,
   FolderKanban,
   Plus,
-  ScatterChart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/lib/cart";
@@ -34,7 +33,6 @@ const STATIC_NAV_TOP = [
 const STATIC_NAV_BOTTOM = [
   { href: "/infrastructure", label: "Infrastructure", icon: Server, color: "text-orange-400" },
   { href: "/warnings", label: "Warnings", icon: AlertTriangle, color: "text-red-400" },
-  { href: "/pcg", label: "Code Graph", icon: ScatterChart, color: "text-blue-400" },
   { href: "/sync", label: "Sync", icon: RefreshCw, color: "text-cyan-400" },
   { href: "/agents", label: "Agents", icon: Bot },
   { href: "/multiview", label: "Multi-View", icon: LayoutGrid, color: "text-amber-400" },
