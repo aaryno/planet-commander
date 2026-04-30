@@ -822,7 +822,78 @@ export const api = {
     fetchApi<PermissionsResponse>(`/permissions/${encodeURIComponent(tool)}`, {
       method: "DELETE",
     }),
+
+  // ── Planet Code Graph ──────────────────────────────────────────────
+  pcgStatus: () => fetchApi<PcgStatus>("/pcg/status"),
+  pcgSearch: (q: string, nodeType?: string, limit = 25) => {
+    const params = new URLSearchParams({ q, limit: String(limit) });
+    if (nodeType) params.set("node_type", nodeType);
+    return fetchApi<PcgSearchResult[]>(`/pcg/search?${params}`);
+  },
+  pcgFullTrace: (name: string, depth = 6, fanout = 25) => {
+    const params = new URLSearchParams({
+      name,
+      depth: String(depth),
+      fanout: String(fanout),
+    });
+    return fetchApi<PcgTrace>(`/pcg/full-trace?${params}`);
+  },
+  pcgCallers: (funcName: string, limit = 25) =>
+    fetchApi<PcgCallerResult[]>(
+      `/pcg/callers?func_name=${encodeURIComponent(funcName)}&limit=${limit}`,
+    ),
 };
+
+// ── PCG types ──────────────────────────────────────────────────────────
+
+export interface PcgStatus {
+  repos: number;
+  nodes: number;
+  edges: number;
+  top_node_types: Array<{ node_type: string; n: number }>;
+  top_edge_types: Array<{ edge_type: string; n: number }>;
+}
+
+export interface PcgSearchResult {
+  id: string;
+  node_type: string;
+  qualified_name: string;
+  short_name: string | null;
+  repo_name: string | null;
+  file_path: string | null;
+  language: string | null;
+}
+
+export interface PcgCallerResult {
+  id: string;
+  qualified_name: string;
+  short_name: string | null;
+  file_path: string | null;
+  repo_name: string | null;
+}
+
+export interface PcgTraceNode {
+  id: string;
+  node_type: string;
+  qualified_name: string;
+  short_name: string | null;
+  repo_name: string | null;
+  file_path: string | null;
+}
+
+export interface PcgTraceStep {
+  edge_type: string | null;
+  direction: string;
+  depth: number;
+  node: PcgTraceNode;
+  children: PcgTraceStep[];
+}
+
+export interface PcgTrace {
+  start: PcgTraceNode;
+  upstream: PcgTraceStep;
+  downstream: PcgTraceStep;
+}
 
 export interface ProjectConfig {
   id: string;
