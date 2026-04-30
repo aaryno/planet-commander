@@ -6,14 +6,20 @@ import { ScatterChart } from "lucide-react";
 import { PcgTraceCard } from "@/components/cards/PcgTrace";
 import { ScrollableCard } from "@/components/ui/scrollable-card";
 import { api } from "@/lib/api";
+import { useFeatures } from "@/lib/features";
 import type { PcgStatus } from "@/lib/api";
 
 export default function PcgPage() {
+  const features = useFeatures();
   const [status, setStatus] = useState<PcgStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!features.pcg_integration) {
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     setLoading(true);
     api
@@ -33,7 +39,50 @@ export default function PcgPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [features.pcg_integration]);
+
+  if (!features.pcg_integration) {
+    return (
+      <div className="min-h-screen bg-zinc-950 text-zinc-200">
+        <div className="container mx-auto px-4 py-12 max-w-2xl">
+          <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-6 space-y-3">
+            <div className="flex items-center gap-3">
+              <ScatterChart className="h-6 w-6 text-zinc-500" />
+              <h1 className="text-lg font-semibold">PCG integration is not enabled</h1>
+            </div>
+            <p className="text-sm text-zinc-400">
+              Planet Code Graph (PCG) is an optional Compute Platform tool
+              that indexes Planet code into the same <code>planet_ops</code>{" "}
+              database Commander uses. When enabled, it powers the trace
+              card on this page.
+            </p>
+            <p className="text-sm text-zinc-400">
+              To enable, install PCG from{" "}
+              <a
+                href="https://hello.planet.com/code/aaryn/planet-code-graph"
+                className="text-blue-400 hover:underline"
+              >
+                aaryn/planet-code-graph
+              </a>{" "}
+              and run <code className="text-xs bg-zinc-800 rounded px-1">pcg index</code>
+              to populate the graph. Then enable the integration in your
+              Commander config:
+            </p>
+            <pre className="text-xs bg-zinc-950 border border-zinc-800 rounded p-3 overflow-x-auto">
+{`# ~/.config/planet-commander/config.yaml
+enable_pcg_integration: true
+
+# or via env var:
+PLANET_OPS_ENABLE_PCG_INTEGRATION=true`}
+            </pre>
+            <p className="text-xs text-zinc-500">
+              Restart Commander backend after changing the flag.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-200">

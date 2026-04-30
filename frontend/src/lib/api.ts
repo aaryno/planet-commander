@@ -823,6 +823,9 @@ export const api = {
       method: "DELETE",
     }),
 
+  // ── Configuration / feature flags ──────────────────────────────────
+  configFeatures: () => fetchApi<FeatureFlags>("/config/features"),
+
   // ── Planet Code Graph ──────────────────────────────────────────────
   pcgStatus: () => fetchApi<PcgStatus>("/pcg/status"),
   pcgSearch: (q: string, nodeType?: string, limit = 25) => {
@@ -843,6 +846,12 @@ export const api = {
       `/pcg/callers?func_name=${encodeURIComponent(funcName)}&limit=${limit}`,
     ),
 };
+
+// ── Feature flags ──────────────────────────────────────────────────────
+
+export interface FeatureFlags {
+  pcg_integration: boolean;
+}
 
 // ── PCG types ──────────────────────────────────────────────────────────
 

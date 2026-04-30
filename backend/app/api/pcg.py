@@ -36,6 +36,44 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/pcg", tags=["pcg"])
 
 
+# Cached result of the PCG-tables-exist probe. None until first check, then
+# bool. Per-process, so a restart re-probes — useful if PCG is installed
+# after Commander is already running.
+_pcg_available: bool | None = None
+
+
+async def _ensure_pcg_available(db: AsyncSession) -> None:
+    """Return graceful 503 if PCG tables don't exist in this DB.
+
+    Defense-in-depth: even when the integration flag is enabled, the user
+    may not have PCG indexed yet. Without this check the endpoints crash
+    with `relation "code_nodes" does not exist` — opaque from the UI.
+    """
+    global _pcg_available
+    if _pcg_available is True:
+        return
+    result = await db.execute(
+        text(
+            "SELECT EXISTS ("
+            " SELECT 1 FROM information_schema.tables"
+            " WHERE table_name = 'code_nodes' AND table_schema = current_schema()"
+            ")"
+        )
+    )
+    _pcg_available = bool(result.scalar_one())
+    if not _pcg_available:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "PCG (Planet Code Graph) tables not found in the configured "
+                "database. PCG is a separate Compute Platform tool that "
+                "indexes Planet code into the same planet_ops DB. See "
+                "https://hello.planet.com/code/aaryn/planet-code-graph "
+                "for installation."
+            ),
+        )
+
+
 # Edge sets walked by full_trace. Mirrors indexer/full_trace.py exactly —
 # if you change one, change the other.
 _OUTGOING_EDGES = (
@@ -271,6 +309,7 @@ async def _walk(
 @router.get("/status", response_model=StatusResponse)
 async def status(db: AsyncSession = Depends(get_db)) -> StatusResponse:
     """Graph summary stats."""
+    await _ensure_pcg_available(db)
     repos = (await db.execute(text("SELECT count(*)::int as n FROM code_repos"))).scalar_one()
     nodes = (await db.execute(text("SELECT count(*)::int as n FROM code_nodes"))).scalar_one()
     edges = (await db.execute(text("SELECT count(*)::int as n FROM code_edges"))).scalar_one()
@@ -303,6 +342,7 @@ async def search(
     db: AsyncSession = Depends(get_db),
 ) -> list[SearchResultOut]:
     """Find nodes by name (qualified_name or short_name ILIKE)."""
+    await _ensure_pcg_available(db)
     params: dict[str, Any] = {"pat": f"%{q}%", "lim": limit}
     where = "(cn.qualified_name ILIKE :pat OR cn.short_name ILIKE :pat)"
     if node_type:
@@ -340,6 +380,7 @@ async def callers(
     db: AsyncSession = Depends(get_db),
 ) -> list[CallerResultOut]:
     """Find callers of a function via the `calls` edge type."""
+    await _ensure_pcg_available(db)
     sql = text(
         """
         SELECT DISTINCT cn_from.id, cn_from.qualified_name, cn_from.short_name,
@@ -378,6 +419,7 @@ async def full_trace(
     Mirrors `pcg full-trace` (and the MCP `pcg_full_trace` tool). Returns
     a tree of upstream and downstream nodes.
     """
+    await _ensure_pcg_available(db)
     start = await _find_start_node(db, name)
     if start is None:
         raise HTTPException(status_code=404, detail=f"No node found matching '{name}'")
@@ -429,6 +471,7 @@ async def query(
     GRANT/REVOKE). The DB role itself may have write perms, so the
     application-level check matters.
     """
+    await _ensure_pcg_available(db)
     sql_text = (req.sql or "").strip()
     head = sql_text.lstrip("(").upper()
     if not (head.startswith("SELECT") or head.startswith("WITH")):

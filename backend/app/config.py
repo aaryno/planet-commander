@@ -3,7 +3,11 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings
 
-LOCAL_CONFIG_PATH = Path.home() / ".config" / "planet-commander" / "config.yaml"
+import os
+
+LOCAL_CONFIG_PATH = Path(
+    os.environ.get("COMMANDER_CONFIG", Path.home() / ".config" / "planet-commander" / "config.yaml")
+)
 
 
 def _load_local_config() -> dict:
@@ -64,6 +68,16 @@ class Settings(BaseSettings):
     poll_oncall: int = 60
     poll_worktrees: int = 60
 
+    # ── Optional integrations ─────────────────────────────────────────
+    # Planet Code Graph (PCG): a Compute Platform tool that indexes Planet
+    # source code into the planet_ops DB (code_nodes/code_edges/code_repos
+    # tables). Off by default so a vanilla Commander install doesn't hit
+    # missing-table errors. Enable only if PCG is installed and indexing
+    # against the same planet_ops instance.
+    #
+    # See: https://hello.planet.com/code/aaryn/planet-code-graph
+    enable_pcg_integration: bool = False
+
     class Config:
         env_prefix = "PLANET_OPS_"
 
@@ -76,6 +90,7 @@ def _build_settings() -> "Settings":
         "gitlab_base_url", "gitlab_api_url",
         "jira_base_url", "grafana_base_url", "slack_base_url",
         "user_display_name", "warning_channel", "alert_channel",
+        "enable_pcg_integration",
     ):
         if key in _local_config:
             overrides[key] = _local_config[key]

@@ -304,7 +304,15 @@ app.include_router(sync.router)  # Router has /api/sync prefix
 app.include_router(worktrees.router, prefix="/api/worktrees", tags=["worktrees"])
 app.include_router(wx.router, prefix="/api/wx", tags=["wx"])
 app.include_router(infra.router)  # Router has /api/infra prefix
-app.include_router(pcg.router)  # Router has /api/pcg prefix
+
+# Planet Code Graph (PCG) integration is optional. Off by default so a
+# vanilla Commander install (without PCG indexing into planet_ops) doesn't
+# expose endpoints that crash with missing-table errors. Enable via
+# PLANET_OPS_ENABLE_PCG_INTEGRATION=true or
+# ~/.config/planet-commander/config.yaml: { enable_pcg_integration: true }.
+from app.config import settings as _settings  # local import — avoid top-level cycle
+if _settings.enable_pcg_integration:
+    app.include_router(pcg.router)  # Router has /api/pcg prefix
 
 
 @app.get("/api/health")

@@ -23,6 +23,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useCart } from "@/lib/cart";
 import { api } from "@/lib/api";
+import { useFeatures } from "@/lib/features";
 import type { ProjectConfig } from "@/lib/api";
 
 const STATIC_NAV_TOP = [
@@ -90,10 +91,19 @@ export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const { count: cartCount, setDrawerOpen } = useCart();
   const [projects, setProjects] = useState<ProjectConfig[]>([]);
+  const features = useFeatures();
 
   useEffect(() => {
     api.listProjects().then(setProjects).catch(() => {});
   }, []);
+
+  // Hide nav entries for optional integrations that aren't enabled.
+  // Filter STATIC_NAV_BOTTOM at render time so we don't have to special-case
+  // each entry inline.
+  const navBottom = STATIC_NAV_BOTTOM.filter((item) => {
+    if (item.href === "/pcg") return features.pcg_integration;
+    return true;
+  });
 
   return (
     <aside
@@ -168,7 +178,7 @@ export function Sidebar() {
         {collapsed && <div className="border-t border-zinc-800 my-1" />}
 
         {/* Bottom static nav */}
-        {STATIC_NAV_BOTTOM.map((item) => (
+        {navBottom.map((item) => (
           <NavLink
             key={item.href}
             {...item}
